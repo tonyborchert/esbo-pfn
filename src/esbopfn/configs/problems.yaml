@@ -2,6 +2,12 @@
 # tab:app:theta-box). `channels` are the level channels the state-conditioned predictors see,
 # `rate_channels` the measured rates (empty: rates are level differences). Grid strides are not
 # listed here, they follow from T (esbopfn.grids).
+#
+# `prior` holds the universal prior of thesis tab:app:prior-phi: entries of p in simulator order,
+# each `scale` (LogUniform(nominal / f_lo, nominal * f_hi)), `bounded` (Uniform(lo, hi)) or `tied`
+# (value[source] * LogUniform(1/zeta, zeta)). `nominal` is the default plant. `extras` are
+# per-instance quantities outside p_hat. `noise` holds tab:app:prior-noise: one entry per noise
+# group with its base level, the channels it perturbs and its kind (sensor or actuation).
 
 boiler:
   T: 701
@@ -11,6 +17,13 @@ boiler:
   rate_channels: []
   theta:
     - {name: turn_on_delay, lo: 5.0, hi: 500.0}
+  prior:
+    uses_phi_hat: false
+    phi:
+      - {name: heating_rate, rule: scale, nominal: 1.0, f_lo: 5.0, f_hi: 5.0}
+      - {name: cooling_rate, rule: scale, nominal: 0.1, f_lo: 5.0, f_hi: 5.0}
+  noise:
+    - {name: temperature, base: 0.03, channels: [temperature], kind: sensor}
 
 threetank_pi:
   T: 476
@@ -21,6 +34,14 @@ threetank_pi:
   theta:
     - {name: K_P, lo: 0.0, hi: 3.0}
     - {name: K_I, lo: 0.0, hi: 0.1}
+  prior:
+    uses_phi_hat: false
+    phi:
+      - {name: V101_opening, rule: bounded, lo: 10.0, hi: 85.0, nominal: 43.3}
+      - {name: V106_opening, rule: bounded, lo: 10.0, hi: 90.0, nominal: 44.7}
+      - {name: B101_volume, rule: bounded, lo: 0.040, hi: 0.130, nominal: 0.080}
+  noise:
+    - {name: V4, base: 1.7e-4, channels: [V4], kind: sensor}
 
 pt2_deadtime:
   T: 501
@@ -32,6 +53,14 @@ pt2_deadtime:
     - {name: log10_K_P, lo: -1.0, hi: 1.0}
     - {name: log10_K_I, lo: -1.0, hi: 1.0}
     - {name: log10_K_D, lo: -1.0, hi: 1.0}
+  prior:
+    uses_phi_hat: false
+    phi:
+      - {name: K, rule: scale, nominal: 4.0, f_lo: 5.0, f_hi: 5.0}
+      - {name: w0, rule: scale, nominal: 0.5, f_lo: 5.0, f_hi: 5.0}
+      - {name: D, rule: scale, nominal: 0.5, f_lo: 5.0, f_hi: 5.0}
+  noise:
+    - {name: y, base: 4.0e-5, channels: [y], kind: sensor}
 
 cartpole:
   T: 1000
@@ -44,6 +73,18 @@ cartpole:
     - {name: K_D_cart, lo: 30.0, hi: 300.0}
     - {name: K_P_pole, lo: 10.0, hi: 100.0}
     - {name: K_D_pole, lo: 150.0, hi: 1500.0}
+  prior:
+    uses_phi_hat: false
+    phi:
+      - {name: cart_mass, rule: scale, nominal: 1.0, f_lo: 8.0, f_hi: 8.0}
+      - {name: pole_mass, rule: scale, nominal: 0.1, f_lo: 8.0, f_hi: 8.0}
+      - {name: pole_half_length, rule: scale, nominal: 0.5, f_lo: 3.0, f_hi: 3.0}
+      - {name: max_force, rule: scale, nominal: 10.0, f_lo: 3.0, f_hi: 3.0}
+  noise:
+    - {name: x_cart, base: 0.004, channels: [x_cart], kind: sensor}
+    - {name: xdot_cart, base: 0.02, channels: [xdot_cart], kind: sensor}
+    - {name: phi_pole, base: 0.002, channels: [phi_pole], kind: sensor}
+    - {name: phidot_pole, base: 0.02, channels: [phidot_pole], kind: sensor}
 
 furuta:
   T: 600
@@ -60,3 +101,24 @@ furuta:
     - {name: q4, lo: 0.5, hi: 1.5}
     - {name: r, lo: 0.5, hi: 1.5}
     - {name: K_P_barrier, lo: 1.5, hi: 3.5}
+  prior:
+    uses_phi_hat: true
+    phi:
+      - {name: Rm, rule: scale, nominal: 8.4, f_lo: 4.0, f_hi: 5.0}
+      - {name: kt, rule: scale, nominal: 0.042, f_lo: 4.0, f_hi: 5.0}
+      - {name: km, rule: tied, source: kt, zeta: 1.5, nominal: 0.042}
+      - {name: mr, rule: scale, nominal: 0.095, f_lo: 4.0, f_hi: 8.0}
+      - {name: Lr, rule: scale, nominal: 0.085, f_lo: 3.0, f_hi: 4.0}
+      - {name: Dr, rule: scale, nominal: 2.75e-4, f_lo: 10.0, f_hi: 3.0}
+      - {name: mp, rule: scale, nominal: 0.024, f_lo: 4.0, f_hi: 10.0}
+      - {name: Lp, rule: scale, nominal: 0.129, f_lo: 3.0, f_hi: 4.0}
+      - {name: Dp, rule: scale, nominal: 5.05e-5, f_lo: 10.0, f_hi: 3.0}
+    extras:
+      # actuation dead time in seconds, 1 to 3 control periods at 120 Hz (8.33 to 25.0 ms)
+      - {name: dead_time, rule: bounded, lo: 0.008333333333333333, hi: 0.025, nominal: 0.016666666666666666}
+      # reset-kick amplitude in volts, a 30 ms pulse whose sign is drawn per trial
+      - {name: kick, rule: bounded, lo: 0.0, hi: 0.6, nominal: 0.1}
+  noise:
+    - {name: angle, base: 0.002, channels: [phi_arm, phi_pend], kind: sensor}
+    - {name: velocity, base: 0.07, channels: [phidot_arm, phidot_pend], kind: sensor}
+    - {name: voltage, base: 0.1, channels: [], kind: actuation}

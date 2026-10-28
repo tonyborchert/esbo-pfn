@@ -280,6 +280,7 @@ DecPFN-H `#0B3C73`, Oracle `#000000`), RWTH palette for schematics (`#00549F`, `
 
 Only these are expected to remain after the build. Anything else is a bug.
 - `cold_refit_growth = 0.05` in optimization runs (thesis silent). Tony may set 0.0.
+- XDecPFN and FT-PFN train without gradient-norm clipping (thesis appendix states clip 1 for all four models). Decision 2026-10-28.
 - Training set sizes are exact (100,000 / 1,000,000) and steps = floor(N/128).
 - Specification choices where the thesis is silent: seeds, validation set sizes, ρ estimation by
   pilot sampling, iid uniform initial design, candidate set for the GP acquisition (2000 uniform).

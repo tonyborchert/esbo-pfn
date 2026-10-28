@@ -20,3 +20,7 @@ code makes a choice that the thesis does not state or states differently.
    - The initial design is iid uniform on the search box.
    - The candidate set of the GP acquisition (BO, ESBO-GP, ESBO-Oracle, ESBO-T-TabPFN, DecPFN,
      DecPFN-H) is 2000 points drawn uniformly from the search box.
+
+## Gradient clipping for XDecPFN and FT-PFN
+
+The appendix states that all four own models clip the gradient norm at 1. XDecPFN and FT-PFN are trained without gradient clipping. LC-PFN and DecPFN clip at 1 as stated.

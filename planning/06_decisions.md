@@ -55,3 +55,8 @@ file says otherwise. Later changes are appended at the end with a date.
   HPO pipeline only for LC-PFN/DecPFN (and used by lcpfn-last / decpfn-nostates through inheritance).
 - G6. Data generation for every model including FT-PFN Furuta is a runnable command, nothing is
   "artifact only".
+
+## Amendments
+- 2026-10-28 (Tony): **D5 amended.** XDecPFN and FT-PFN follow the thesis text in everything except
+  gradient clipping, which stays OFF for these two models (no grad-norm clip). LC-PFN and DecPFN keep
+  clip 1 as the thesis states. This is a documented deviation (07 §11, docs/DEVIATIONS.md).

@@ -1,0 +1,18 @@
+{
+ "optimizer": "stenger",
+ "seed": 0,
+ "variant": 1,
+ "plant": "hardware",
+ "stop_reason": "t_budget (36000)",
+ "elapsed": 1926.8389954366721,
+ "trials_budget": 180,
+ "t_budget": 36000,
+ "require_all_budgets": false,
+ "finished_at": 1789310182.8589926,
+ "n_trials": 104,
+ "combined_t": 36000,
+ "incumbent": 262.1499358236842,
+ "cycle": "settled_tick_center",
+ "reopen_every": 20,
+ "before_close": false
+}

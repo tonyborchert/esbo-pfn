@@ -1,0 +1,56 @@
+# Closed-loop optimization: fig:sim:optplay-cross, fig:app:optplay-cross-sheet,
+# fig:sim:optplay-violin-cross-full, fig:app:optplay-violin-sheet, fig:sim:optplay-crashes
+# (the nine thesis strategies, 5 problems x screened instances 0-19, one run each),
+# fig:app:optplay-decpfn-thresholds-violin and fig:app:optplay-qx-variants-violin (variant cells),
+# fig:sim:optplay-timing (decision-time split, instances 0-2, one thread).
+description: Optimizers in the closed loop under the thesis budgets
+kinds: [instances, optimization, optimization_timing]
+problems: [boiler, threetank_pi, pt2_deadtime, cartpole, furuta]
+instances: {count: 50}
+optimization:
+  instances: 20
+  seeds: [0]
+  strategies:
+    - {id: esrs, label: ESRS}
+    - {id: bo, label: BO}
+    - {id: esbo-gp, label: ESBO-GP}
+    - {id: esbo-t-tabpfn, label: ESBO-T-TabPFN}
+    - {id: decpfn, label: DecPFN}
+    - {id: decpfn-h, label: DecPFN-H}
+    - {id: xdecpfn-pi, label: XDecPFN-PI}
+    - {id: ftpfn-ei, label: FT-PFN-EI}
+    - {id: esbo-oracle, label: ESBO-Oracle}
+    # appendix: DecPFN thresholds (tau 0.9 / 0.99, with and without crash_threshold 0.9)
+    - {id: decpfn, params: {crash_threshold: 0.9}, label: "DecPFN 0.9 crash 0.9"}
+    - {id: decpfn, params: {tau: 0.99}, label: "DecPFN 0.99"}
+    - {id: decpfn, params: {tau: 0.99, crash_threshold: 0.9}, label: "DecPFN 0.99 crash 0.9"}
+    - {id: decpfn-h, params: {crash_threshold: 0.9}, label: "DecPFN-H 0.9 crash 0.9"}
+    - {id: decpfn-h, params: {tau: 0.99}, label: "DecPFN-H 0.99"}
+    - {id: decpfn-h, params: {tau: 0.99, crash_threshold: 0.9}, label: "DecPFN-H 0.99 crash 0.9"}
+    # appendix: pure-loop cells (2 models x EI/PI x tau 0.9 / 0.99, naive rule)
+    - {id: xdecpfn-ei, label: "XDecPFN-EI 0.99"}
+    - {id: xdecpfn-pi, params: {tau: 0.9}, label: "XDecPFN-PI 0.9"}
+    - {id: xdecpfn-ei, params: {tau: 0.9}, label: "XDecPFN-EI 0.9"}
+    - {id: ftpfn-pi, label: "FT-PFN-PI 0.99"}
+    - {id: ftpfn-ei, params: {tau: 0.9}, label: "FT-PFN-EI 0.9"}
+    - {id: ftpfn-pi, params: {tau: 0.9}, label: "FT-PFN-PI 0.9"}
+optimization_timing:
+  instances: 3
+  seeds: [0]
+  strategies:
+    - {id: bo, label: BO}
+    - {id: esbo-gp, label: ESBO-GP}
+    - {id: esbo-t-tabpfn, label: ESBO-T-TabPFN}
+    - {id: decpfn, label: DecPFN}
+    - {id: decpfn-h, label: DecPFN-H}
+    - {id: xdecpfn-pi, label: XDecPFN-PI}
+    - {id: ftpfn-ei, label: FT-PFN-EI}
+# J_best of an instance: the best successful final cost of any run of these strategies (every
+# strategy of the optimization section). J_ESRS: the final incumbent of esrs.
+reference_strategies: all
+main_strategies: [ESRS, BO, ESBO-GP, ESBO-T-TabPFN, DecPFN, DecPFN-H, XDecPFN-PI, FT-PFN-EI,
+                  ESBO-Oracle]
+figures:
+  cross: {trials_axis: "15 * min(d, 4)", time_points: 300, regret_floor: 1.0e-4}
+  violins: {fractions: [0.5, 1.0]}
+  crashes: {problems: [pt2_deadtime, cartpole, furuta], time_points: 300}

@@ -60,3 +60,11 @@ file says otherwise. Later changes are appended at the end with a date.
 - 2026-10-28 (Tony): **D5 amended.** XDecPFN and FT-PFN follow the thesis text in everything except
   gradient clipping, which stays OFF for these two models (no grad-norm clip). LC-PFN and DecPFN keep
   clip 1 as the thesis states. This is a documented deviation (07 §11, docs/DEVIATIONS.md).
+- 2026-10-29 (Tony): `cold_refit_growth = 0.05` is kept (confirmed).
+- 2026-10-29 (Tony): **Slurm accounts are never hardcoded** in code or committed configs. The RWTH
+  profile reads `PFN_SLURM_ACCOUNT_CPU` and `PFN_SLURM_ACCOUNT_GPU` (fallback `$PROJECT`) from the
+  environment. Docs may show how to set them.
+- 2026-10-29 (Tony): **HPC validation budget:** after the build, run small-scale comparisons on the
+  cluster to see how performance changed (100k pools, 100k DecPFN/LC-PFN models, full XDecPFN and
+  FT-PFN on cartpole, cartpole prediction benchmark, reduced optimization benchmark): a few GPU hours
+  and at most 1,000 CPU hours in total.

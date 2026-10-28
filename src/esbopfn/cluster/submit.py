@@ -106,8 +106,9 @@ def render(
     if profile.scheduler == "slurm":
         part = "gpu" if gpu else "cpu"
         lines.append(f"#SBATCH --job-name={req.name}")
-        if profile.accounts.get(part):
-            lines.append(f"#SBATCH --account={profile.accounts[part]}")
+        account = profile.resolved_account(part)
+        if account:
+            lines.append(f"#SBATCH --account={account}")
         if profile.partitions.get(part):
             lines.append(f"#SBATCH --partition={profile.partitions[part]}")
         lines += [

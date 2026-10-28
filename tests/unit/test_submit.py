@@ -1,3 +1,4 @@
+import os
 import subprocess
 import sys
 
@@ -9,6 +10,8 @@ from esbopfn.cluster.submit import parse_array
 
 
 def dry_run(capsys, *args):
+    os.environ["PFN_SLURM_ACCOUNT_CPU"] = "acct_cpu"
+    os.environ["PFN_SLURM_ACCOUNT_GPU"] = "acct_gpu"
     code = main(["submit", "--dry-run", *args])
     assert code == 0
     return capsys.readouterr().out
@@ -25,7 +28,7 @@ def test_dry_run_claix_gpu(pfn_home, capsys):
     out = dry_run(capsys, "--profile", "rwth_claix", "--kind", "train", "--time", "01:00:00",
                   "--name", "tr", "--", "pfn", "train", "decpfn", "--problem", "cartpole")
     assert out.startswith("#!/bin/bash\n#SBATCH --job-name=tr\n")
-    assert "#SBATCH --account=thes2287" in out and "#SBATCH --partition=c23g" in out
+    assert "#SBATCH --account=acct_gpu" in out and "#SBATCH --partition=c23g" in out
     assert "#SBATCH --gres=gpu:1" in out and "#SBATCH --time=01:00:00" in out
     assert "#SBATCH --cpus-per-task=8" in out and "#SBATCH --mem=64G" in out
     assert f"#SBATCH --output={pfn_home.resolve()}/logs/%x_%j.out" in out
@@ -37,10 +40,22 @@ def test_dry_run_claix_gpu(pfn_home, capsys):
     assert not (pfn_home / "jobs").exists()
 
 
+def test_account_placeholders(monkeypatch):
+    claix = load_profile("rwth_claix")
+    monkeypatch.delenv("PFN_SLURM_ACCOUNT_CPU", raising=False)
+    monkeypatch.delenv("PFN_SLURM_ACCOUNT_GPU", raising=False)
+    monkeypatch.setenv("PROJECT", "proj_from_cluster")
+    assert claix.resolved_account("gpu") == "proj_from_cluster"
+    with pytest.raises(RuntimeError, match="PFN_SLURM_ACCOUNT_CPU"):
+        claix.resolved_account("cpu")
+    monkeypatch.setenv("PFN_SLURM_ACCOUNT_CPU", "x")
+    assert claix.resolved_account("cpu") == "x"
+
+
 def test_dry_run_claix_array_cpu(pfn_home, capsys):
     out = dry_run(capsys, "--profile", "rwth_claix", "--kind", "bench", "--array", "5-9%2",
                   "--after", "123", "--", "pfn", "bench", "run", "--group", "g")
-    assert "#SBATCH --account=rwth2055" in out and "#SBATCH --partition=c23ms" in out
+    assert "#SBATCH --account=acct_cpu" in out and "#SBATCH --partition=c23ms" in out
     assert "--gres" not in out and "PYTORCH_CUDA_ALLOC_CONF" not in out
     assert "#SBATCH --array=5-9%2" in out and "#SBATCH --dependency=afterok:123" in out
     assert "%x_%A_%a.out" in out

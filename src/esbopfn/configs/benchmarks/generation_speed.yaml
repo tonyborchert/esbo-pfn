@@ -1,0 +1,6 @@
+# tab:app:prior-cost: seconds per 10,000 single trajectories and trajectory sets on one CPU core,
+# with the acceptance rates of the trajectory and system priors (needs the C++ binaries).
+description: Prior sampling cost on one core
+kinds: [generation_speed]
+problems: [boiler, threetank_pi, pt2_deadtime, cartpole, furuta]
+generation_speed: {count: 2000, sets: 10, budget_s: 120.0, seed: 0}

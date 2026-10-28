@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -10,6 +11,24 @@ from esbopfn.config import configs_dir, profile_name
 from esbopfn.util.yaml import load_yaml
 
 JOB_KINDS: tuple[str, ...] = ("gen", "train", "bench", "bench_gpu")
+
+_PLACEHOLDER = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)(?::-([^}]*))?\}")
+
+
+def expand_env(value: str, environ: dict[str, str] | None = None) -> str | None:
+    """Expand ``${VAR}`` and ``${VAR:-default}`` placeholders, None if one stays unresolved."""
+    env = os.environ if environ is None else environ
+
+    def sub(m: re.Match[str]) -> str:
+        name, default = m.group(1), m.group(2)
+        if name in env and env[name] != "":
+            return env[name]
+        return default if default is not None else m.group(0)
+
+    expanded = _PLACEHOLDER.sub(sub, value)
+    if "${" in expanded:
+        expanded = _PLACEHOLDER.sub(sub, expanded)
+    return None if "${" in expanded else expanded
 
 
 @dataclass(frozen=True)
@@ -48,13 +67,21 @@ class Profile:
         """``root`` with environment variables expanded, or None if unset or unresolvable."""
         if not self.root:
             return None
-        env = os.environ if environ is None else environ
-        expanded = self.root
-        for key, value in env.items():
-            expanded = expanded.replace("${" + key + "}", value)
-        if "${" in expanded:
+        expanded = expand_env(self.root, environ)
+        return None if expanded is None else Path(expanded).expanduser()
+
+    def resolved_account(self, part: str, environ: dict[str, str] | None = None) -> str | None:
+        """The account of resource class ``part`` with placeholders expanded, None if unset."""
+        raw = self.accounts.get(part)
+        if not raw:
             return None
-        return Path(expanded).expanduser()
+        expanded = expand_env(raw, environ)
+        if expanded is None:
+            raise RuntimeError(
+                f"the {part} Slurm account of profile {self.name!r} is {raw!r}, set the "
+                "environment variable it names (see docs/CLUSTER.md)"
+            )
+        return expanded
 
 
 def profile_path(name: str) -> Path:

@@ -1,0 +1,30 @@
+# Cross-trajectory predictors: fig:sim:context-sweep (context ladder, mean conditioned LL, PT2 /
+# Cartpole / Furuta, query = last trial of the N_max + 1 trial oracle runs), and
+# fig:sim:ftpfn-xdecpfn-stop-sheet (per n, 50 crashed and 50 non-crashed queries).
+# fig:sim:ftpfn-xdecpfn-example and fig:sim:landscape-furuta are live inference figures.
+description: XDecPFN and FT-PFN over context sizes
+kinds: [instances, fields, prediction, prediction_ladder, prediction_timing]
+problems: [boiler, threetank_pi, pt2_deadtime, cartpole, furuta]
+instances: {count: 50}
+fields:
+  - {name: oracle65}
+  - {name: oracle181, problems: [pt2_deadtime, cartpole, furuta]}
+prediction:
+  n: [0, 2, 4, 8, 16, 32, 64]
+  models:
+    - "xdecpfn/{p}/default/default"
+    - "ftpfn/{p}/default/default"
+prediction_ladder:
+  problems: [pt2_deadtime, cartpole, furuta]
+  models:
+    - "xdecpfn/{p}/default/default"
+    - "ftpfn/{p}/default/default"
+prediction_timing:
+  queries: 5
+  repeats: 5
+  warmup: 1
+  cutoff_frac: 0.5
+figures:
+  stop_sheet:
+    problems: [pt2_deadtime, cartpole, furuta]
+    max_false_stop: 0.1

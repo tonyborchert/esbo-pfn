@@ -1,0 +1,64 @@
+# Single-trajectory predictors: fig:sim:lcpfn-decpfn-heads (DecPFN, DecPFN-noStates, LC-PFN x
+# heads x training sizes, median LL of non-crashed queries pooled over n and cutoffs, centered per
+# problem on the drawn arms) and fig:sim:lcpfn-decpfn-stop-sheet (binned heads, 100k and 1M, on
+# PT2, Cartpole and Furuta). fig:sim:lcpfn-decpfn-example is a live inference figure and
+# fig:app:hpo-gridsearch reads the HPO results under $PFN_HOME/hpo, neither needs units.
+description: LC-PFN, DecPFN and DecPFN-noStates over heads and training sizes
+kinds: [instances, fields, prediction, prediction_timing]
+problems: [boiler, threetank_pi, pt2_deadtime, cartpole, furuta]
+instances: {count: 50}
+fields: {name: oracle65}
+prediction:
+  n: [0, 2, 4, 8, 16, 32, 64]
+  models:
+    - "decpfn/{p}/binned/1M"
+    - "decpfn/{p}/gaussian/1M"
+    - "decpfn/{p}/linear/1M"
+    - "decpfn/{p}/binned/100k"
+    - "decpfn/{p}/gaussian/100k"
+    - "decpfn/{p}/linear/100k"
+    - "decpfn-nostates/{p}/binned/1M"
+    - "decpfn-nostates/{p}/gaussian/1M"
+    - "decpfn-nostates/{p}/linear/1M"
+    - "decpfn-nostates/{p}/binned/100k"
+    - "decpfn-nostates/{p}/gaussian/100k"
+    - "decpfn-nostates/{p}/linear/100k"
+    - "lcpfn/{p}/binned/1M"
+    - "lcpfn/{p}/gaussian/1M"
+    - "lcpfn/{p}/linear/1M"
+    - "lcpfn/{p}/binned/100k"
+    - "lcpfn/{p}/gaussian/100k"
+    - "lcpfn/{p}/linear/100k"
+prediction_timing:
+  n: [0]
+  queries: 5
+  repeats: 5
+  warmup: 1
+  cutoff_frac: 0.5
+# The heads figure centers each problem on the drawn arms.
+participants:
+  - "decpfn/{p}/binned/1M"
+  - "decpfn/{p}/gaussian/1M"
+  - "decpfn/{p}/linear/1M"
+  - "decpfn/{p}/binned/100k"
+  - "decpfn/{p}/gaussian/100k"
+  - "decpfn/{p}/linear/100k"
+  - "decpfn-nostates/{p}/binned/1M"
+  - "decpfn-nostates/{p}/gaussian/1M"
+  - "decpfn-nostates/{p}/linear/1M"
+  - "decpfn-nostates/{p}/binned/100k"
+  - "decpfn-nostates/{p}/gaussian/100k"
+  - "decpfn-nostates/{p}/linear/100k"
+  - "lcpfn/{p}/binned/1M"
+  - "lcpfn/{p}/gaussian/1M"
+  - "lcpfn/{p}/linear/1M"
+  - "lcpfn/{p}/binned/100k"
+  - "lcpfn/{p}/gaussian/100k"
+  - "lcpfn/{p}/linear/100k"
+figures:
+  stop_sheet:
+    problems: [pt2_deadtime, cartpole, furuta]
+    models: ["decpfn/{p}/binned/1M", "decpfn-nostates/{p}/binned/1M", "lcpfn/{p}/binned/1M",
+             "decpfn/{p}/binned/100k", "decpfn-nostates/{p}/binned/100k",
+             "lcpfn/{p}/binned/100k"]
+    max_false_stop: 0.1

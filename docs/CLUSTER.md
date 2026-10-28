@@ -30,7 +30,7 @@ Fields:
 | `name` | profile name |
 | `root` | `PFN_HOME` for jobs when `PFN_HOME` is not set at submit time, `${VAR}` is expanded |
 | `scheduler` | `slurm` or `none` |
-| `accounts`, `partitions` | per resource class `cpu` and `gpu` |
+| `accounts`, `partitions` | per resource class `cpu` and `gpu`. Accounts are placeholders such as `${PFN_SLURM_ACCOUNT_CPU}` or `${PFN_SLURM_ACCOUNT_GPU:-${PROJECT}}`, expanded from the environment at submit time, so no account name is ever committed. On RWTH CLAIX put `export PFN_SLURM_ACCOUNT_CPU=<your cpu project>` and `export PFN_SLURM_ACCOUNT_GPU=<your gpu project>` into your shell profile |
 | `modules` | modules loaded by every job (after `module purge`) |
 | `modules_cpp` | extra modules loaded by `--kind gen` jobs (compiler and BLAS runtime) |
 | `pre`, `pre_gpu` | shell lines run before the command, `pre_gpu` only for jobs with GPUs |

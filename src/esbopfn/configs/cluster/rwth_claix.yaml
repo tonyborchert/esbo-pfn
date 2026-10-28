@@ -3,7 +3,9 @@
 name: rwth_claix
 root: ${HPCWORK}/esbo-pfn  # PFN_HOME inside jobs unless PFN_HOME is set at submit time
 scheduler: slurm
-accounts: {cpu: rwth2055, gpu: thes2287}
+# Accounts are never written into the repo: set PFN_SLURM_ACCOUNT_CPU and PFN_SLURM_ACCOUNT_GPU in
+# your shell profile on the cluster (the GPU account falls back to $PROJECT, which CLAIX exports).
+accounts: {cpu: "${PFN_SLURM_ACCOUNT_CPU}", gpu: "${PFN_SLURM_ACCOUNT_GPU:-${PROJECT}}"}
 partitions: {cpu: c23ms, gpu: c23g}
 modules: [GCCcore/13.3.0, Python/3.12.3]
 modules_cpp: [GCC/13.3.0, imkl/2024.2.0]

@@ -1,0 +1,4 @@
+model_id,group,n_ctx,y,n,n_problems,clamped,oos,y_min,y_max
+dynformer_fr2,dynformer_fr2,0,0.17,1250,5,0.0,0.0,0.17,0.17
+dynformer_fr2,dynformer_fr2,2,1.09,1250,5,0.0,0.0,1.09,1.09
+tabpfn/resolution50/typels,tabpfn,2,0.5,1250,5,0.0,0.0,0.5,0.5

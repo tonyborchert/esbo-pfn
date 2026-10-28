@@ -1,0 +1,32 @@
+{
+ "problem": "boiler",
+ "dataset": "boiler/universal",
+ "d": 1,
+ "T": 701,
+ "screen": {
+  "n_theta": 100,
+  "n_reps": 10,
+  "min_pass": 25
+ },
+ "instances": [
+  {
+   "index": 0,
+   "phi": [
+    1.869,
+    0.1402
+   ],
+   "noise_stds": [
+    0.0221
+   ],
+   "phi_hat": null,
+   "attempt": 0,
+   "screen": {
+    "accepted": true,
+    "pass_count": 25,
+    "theta_screened": 25,
+    "trials_used": 250
+   },
+   "rejected": []
+  }
+ ]
+}

@@ -46,24 +46,35 @@ class PlannedUnit:
 
 
 def select_groups(names: list[str] | None) -> dict[str, PlotGroup]:
-    """The named groups (all if ``names`` is empty), raising ``KeyError`` on unknown names."""
+    """The named groups (all plot modules if ``names`` is empty), raising ``KeyError`` on
+    unknown names. A name without a plot module but with a benchmark spec
+    (``configs/benchmarks/<name>.yaml``) selects the spec's units."""
+    from esbopfn.benchmarks.groups import spec_group, spec_names
+
     groups = discover_groups()
     if not names:
         return groups
-    missing = [n for n in names if n not in groups]
+    specs = set(spec_names())
+    missing = [n for n in names if n not in groups and n not in specs]
     if missing:
-        raise KeyError(f"unknown plot groups {missing}, known: {sorted(groups)}")
-    return {n: groups[n] for n in names}
+        raise KeyError(f"unknown plot groups {missing}, known: {sorted(set(groups) | specs)}")
+    return {n: groups[n] if n in groups else spec_group(n) for n in names}
 
 
-def plan(groups: dict[str, PlotGroup], db: Db, shard: Shard = Shard()) -> list[PlannedUnit]:
-    """Deduplicated units the groups need, sorted by kind and hash, restricted to one shard."""
+def plan(groups: dict[str, PlotGroup], db: Db, shard: Shard = Shard(),
+         kinds: list[str] | None = None) -> list[PlannedUnit]:
+    """Deduplicated units the groups need (only ``kinds`` if given), sorted by the dependency
+    order of the kinds and then by hash, restricted to one shard."""
+    from esbopfn.benchmarks.groups import kind_rank
+
     seen: dict[tuple[str, str], PlannedUnit] = {}
     for name, group in groups.items():
         for kind, key in group.needs(group_config(name), db):
+            if kinds and kind not in kinds:
+                continue
             h = key_hash(key)
             seen.setdefault((kind, h), PlannedUnit(kind, key, h))
-    units = [seen[k] for k in sorted(seen)]
+    units = [seen[k] for k in sorted(seen, key=lambda k: (kind_rank(k[0]), k[0], k[1]))]
     return [u for i, u in enumerate(units) if i % shard.count == shard.index]
 
 

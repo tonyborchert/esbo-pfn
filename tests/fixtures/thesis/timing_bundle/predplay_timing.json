@@ -1,0 +1,39 @@
+{
+ "records": [
+  {
+   "cutoff_frac": 0.5,
+   "n_calls": 1,
+   "measured_at": "2026-09-15T17:51:14+00:00",
+   "host": "artemis",
+   "device": "cuda:Quadro RTX 6000",
+   "torch_threads": 1,
+   "cpu": "x86_64",
+   "torch": "2.14.0+cu126",
+   "model_id": "decpfn/epochs100/headbinned",
+   "group": "decpfn",
+   "problem": "boiler",
+   "n_ctx": 0,
+   "seconds_median": 0.002,
+   "seconds_mean": 0.002,
+   "seconds_p90": 0.002,
+   "context_blind": true
+  },
+  {
+   "cutoff_frac": 0.5,
+   "n_calls": 1,
+   "measured_at": "2026-09-15T17:51:14+00:00",
+   "host": "artemis",
+   "device": "cuda:Quadro RTX 6000",
+   "torch_threads": 1,
+   "cpu": "x86_64",
+   "torch": "2.14.0+cu126",
+   "model_id": "dynformer_c1r2/cellf_s20260931",
+   "group": "dynformer_c1r2",
+   "problem": "furuta_lqr_rigreset",
+   "n_ctx": 64,
+   "seconds_median": 0.05,
+   "seconds_mean": 0.05,
+   "seconds_p90": 0.06
+  }
+ ]
+}

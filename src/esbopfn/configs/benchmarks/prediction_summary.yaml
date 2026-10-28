@@ -1,0 +1,42 @@
+# fig:sim:fig3-cross and fig:app:fig3-sheet (pooled and per-problem ll_norm against median
+# inference time, context-blind models as points, context-aware ones as Pareto fronts over n) and
+# fig:sim:fig2-sheet (steps saved at a false-stop share of at most 0.1: XDecPFN and FT-PFN at
+# n = 0 and 64, DecPFN, DecPFN-noStates and LC-PFN pooled over n).
+description: Representative predictors of every group
+kinds: [instances, fields, prediction, prediction_timing]
+problems: [boiler, threetank_pi, pt2_deadtime, cartpole, furuta]
+instances: {count: 50}
+fields: {name: oracle65}
+prediction:
+  n: [0, 2, 4, 8, 16, 32, 64]
+  models:
+    - "decpfn/{p}/binned/1M"
+    - "lcpfn/{p}/binned/1M"
+    - "decpfn-nostates/{p}/binned/1M"
+    - "xdecpfn/{p}/default/default"
+    - "ftpfn/{p}/default/default"
+    - {id: "tabpfn/50", n: [2, 4, 8, 16, 32, 64]}
+    - {id: "segment-tabpfn/split", n: [4, 8, 16, 32, 64]}
+    - {id: "segment-gp", n: [2, 4, 8, 16, 32, 64]}
+prediction_timing:
+  queries: 5
+  repeats: 5
+  warmup: 1
+  cutoff_frac: 0.5
+# med_D: median of every score of these models on a problem.
+participants:
+  - "decpfn/{p}/binned/1M"
+  - "lcpfn/{p}/binned/1M"
+  - "decpfn-nostates/{p}/binned/1M"
+  - "xdecpfn/{p}/default/default"
+  - "ftpfn/{p}/default/default"
+  - "tabpfn/50"
+  - "segment-tabpfn/split"
+  - "segment-gp"
+figures:
+  fig2_sheet:
+    problems: [pt2_deadtime, cartpole, furuta]
+    context_aware: {models: ["xdecpfn/{p}/default/default", "ftpfn/{p}/default/default"],
+                    n: [0, 64]}
+    pooled: ["decpfn/{p}/binned/1M", "decpfn-nostates/{p}/binned/1M", "lcpfn/{p}/binned/1M"]
+    max_false_stop: 0.1

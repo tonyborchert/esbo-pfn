@@ -1,0 +1,14 @@
+# Prior figures: fig:setup:prior-samples (10 cumulative-cost curves per problem on screened
+# instance 0, at most 5 of 10 unsuccessful) and fig:app:prior-landscapes (5 problems x screened
+# instances 0-2, one slice each, 24 x 24 grid or 80 points for the 1-D Boiler, 6 repeats).
+description: Prior samples and prior landscapes
+kinds: [instances, landscapes]
+problems: [boiler, threetank_pi, pt2_deadtime, cartpole, furuta]
+instances: {count: 50}
+landscapes:
+  instances: [0, 1, 2]
+  slice_seeds: [1]
+  grid_2d: 24
+  grid_1d: 80
+  repeats: 6
+  prior_samples: {instance: 0, n: 10, max_unsuccessful: 5}

@@ -1,0 +1,39 @@
+# fig:sim:tabpfn-panel: Trajectory-TabPFN L in {25, 50, 100, 250} (n >= 2) and Segment-TabPFN
+# rate / split (n >= 4), pooled ll_norm against inference time, Pareto front per variant. The
+# normalization med_D uses the participant set of prediction_summary, so the panel shares its
+# scale with fig:sim:fig3-cross.
+description: Off-the-shelf TabPFN predictors
+kinds: [instances, fields, prediction, prediction_timing]
+problems: [boiler, threetank_pi, pt2_deadtime, cartpole, furuta]
+instances: {count: 50}
+fields: {name: oracle65}
+prediction:
+  n: [0, 2, 4, 8, 16, 32, 64]
+  models:
+    - {id: "tabpfn/25", n: [2, 4, 8, 16, 32, 64]}
+    - {id: "tabpfn/50", n: [2, 4, 8, 16, 32, 64]}
+    - {id: "tabpfn/100", n: [2, 4, 8, 16, 32, 64]}
+    - {id: "tabpfn/250", n: [2, 4, 8, 16, 32, 64]}
+    - {id: "segment-tabpfn/rate", n: [4, 8, 16, 32, 64]}
+    - {id: "segment-tabpfn/split", n: [4, 8, 16, 32, 64]}
+    # participants of med_D (see prediction_summary)
+    - "decpfn/{p}/binned/1M"
+    - "lcpfn/{p}/binned/1M"
+    - "decpfn-nostates/{p}/binned/1M"
+    - "xdecpfn/{p}/default/default"
+    - "ftpfn/{p}/default/default"
+    - {id: "segment-gp", n: [2, 4, 8, 16, 32, 64]}
+prediction_timing:
+  queries: 5
+  repeats: 5
+  warmup: 1
+  cutoff_frac: 0.5
+participants:
+  - "decpfn/{p}/binned/1M"
+  - "lcpfn/{p}/binned/1M"
+  - "decpfn-nostates/{p}/binned/1M"
+  - "xdecpfn/{p}/default/default"
+  - "ftpfn/{p}/default/default"
+  - "tabpfn/50"
+  - "segment-tabpfn/split"
+  - "segment-gp"

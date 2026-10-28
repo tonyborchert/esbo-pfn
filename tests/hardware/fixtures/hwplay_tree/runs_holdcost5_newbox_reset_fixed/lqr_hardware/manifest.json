@@ -1,0 +1,41 @@
+{
+  "T": 600,
+  "crash_tail_penalty": true,
+  "d_budget": 5,
+  "d_tuning": 8,
+  "early_stop_armed_after_init": true,
+  "frequency": 120.0,
+  "gp_cold_refit_growth": 0.05,
+  "objective": "FurutaHoldCost(5deg)",
+  "overlap_refit": null,
+  "plant": "hardware",
+  "regret_floor": 1e-12,
+  "require_all_budgets": false,
+  "setpoint_schedule": null,
+  "settle_weight": null,
+  "t_budget": 36000,
+  "theta_box": [
+    [
+      40.0,
+      0.7,
+      11.5,
+      4.5,
+      0.5,
+      0.5,
+      0.5,
+      1.5
+    ],
+    [
+      90.0,
+      1.2,
+      12.5,
+      5.5,
+      1.5,
+      1.5,
+      1.5,
+      3.5
+    ]
+  ],
+  "trials_budget": 180,
+  "variant": "lqr"
+}

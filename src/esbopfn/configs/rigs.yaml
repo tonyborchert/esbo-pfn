@@ -1,0 +1,41 @@
+# Rig configurations of the Quanser QUBE-Servo 2 Furuta pendulum (open registry).
+#
+# A rig field is always run on one configuration. Any physical change to the rig (a mass, another
+# pendulum link, a different QUBE unit) is a NEW entry here, never an edit of an existing one, so
+# that runs of different plants are never pooled. Every configuration uses the same controller
+# design estimate p_hat (the furuta prior's nominal parameters).
+#
+# Fields:
+#   description              what the configuration is
+#   mass_note                added mass, if any
+#   reset_reference_method   whose mean reset time replaces every trial's reset time on the
+#                            reset-normalized wall-clock axes
+#   j_best                   regret reference: best_on_rig = the best successful cost recorded on
+#                            this rig across the declared methods
+#   thesis_tree              the old hwplay run tree the thesis logs of this rig came from
+rigs:
+  without_weight:
+    description: QUBE-Servo 2 as shipped, pendulum link without added mass
+    mass_note: none
+    reset_reference_method: decpfn-h
+    j_best: best_on_rig
+    thesis_tree: runs_holdcost5_newbox_reset_fixed
+  with_weight:
+    description: QUBE-Servo 2 with a 5 g tip mass at the end of the pendulum link
+    mass_note: 5 g tip mass at the pendulum end
+    reset_reference_method: decpfn-h
+    j_best: best_on_rig
+    thesis_tree: runs_holdcost5_newbox_reset_fixed_different_plant
+
+# The rig field of the thesis: seeds shared across methods (same initial design per seed),
+# N_max = 180 trials and T_budget = 36000 steps (min(d, 4) = 4 for d = 8).
+field:
+  problem: furuta
+  methods: [esrs, bo, esbo-gp, decpfn, decpfn-h, xdecpfn-pi]
+  seeds: [0, 1, 2, 3, 4]
+  n_max: 180
+  t_budget: 36000
+  method_params:
+    decpfn: {tau: 0.9, model: decpfn/furuta/binned/1M}
+    decpfn-h: {tau: 0.9, model: decpfn/furuta/binned/1M}
+    xdecpfn-pi: {tau: 0.99, model: xdecpfn/furuta/default/default}

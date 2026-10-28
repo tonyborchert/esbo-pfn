@@ -1,0 +1,27 @@
+# Hardware benchmarks: the rig field (kind hardware_optimization) and the hardware prediction
+# benchmark (kind hardware_prediction). Rig units are run with `pfn hw run` on the workstation
+# (or imported from the thesis logs), prediction units with `pfn hw bench-pred` or `pfn bench run`.
+rigs: [without_weight, with_weight]
+optimization:
+  methods: [esrs, bo, esbo-gp, decpfn, decpfn-h, xdecpfn-pi]
+  seeds: [0, 1, 2, 3, 4]
+  provenance: thesis          # which rig logs the figures read: thesis (imported) or native
+prediction:
+  logs: thesis                # rig logs the queries come from: thesis (imported) or native
+  ladder: [0, 1, 2, 5, 11, 22, 45, 90]
+  cutoff_fracs: [0.1, 0.3, 0.5, 0.7, 0.9]
+  predictors:
+    segment-gp: segment-gp
+    decpfn: decpfn/furuta/binned/1M
+    xdecpfn: xdecpfn/furuta/default/default
+  ablation:
+    decpfn: decpfn/furuta/binned/1M
+    decpfn-nostates: decpfn-nostates/furuta/binned/1M
+    decpfn-nodeadtime: decpfn-nodeadtime/furuta/binned/1M
+    decpfn-nodeadtime-nostates: decpfn-nodeadtime-nostates/furuta/binned/1M
+metrics:
+  trials_axis: 60             # regret over the first 60 trials
+  budget_fracs: [0.5, 1.0]    # regret distribution at 50 % and 100 % of the wall-clock budget
+  cost_window_s: 1000         # best successful raw cost over the first 1000 s
+  incumbent_at_s: 500         # incumbent controller of the median seed at 500 s
+  incumbent_methods: [esbo-gp, xdecpfn-pi]

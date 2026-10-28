@@ -1,0 +1,10 @@
+{
+ "problem": "cartpole",
+ "model_id": "dynformer_fr2",
+ "query_index": 180,
+ "contexts": [
+  2,
+  0
+ ],
+ "k_selected": 2
+}

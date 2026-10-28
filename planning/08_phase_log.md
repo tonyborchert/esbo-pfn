@@ -196,3 +196,24 @@ Hyperparameter files `src/esbopfn/configs/hparams/<model>.yaml`, one row per (si
   the uniform-box moments, FT-PFN inputs clamped to the calibration range, calibration from the
   first 2,000 instances / 20,000 contexts, validation 16 examples per held-out instance, first-fit
   packing with SDPA boolean mask (no flex_attention).
+
+## Phase 3a (training core, heads, DecPFN, LC-PFN, HPO) — done
+
+`training/{common,registry,heads,normalization,single_trajectory_data,train_lcpfn,train_decpfn,hpo}.py`,
+`predictors/{decpfn,lcpfn}/{model,train,predictor}.py`, `commands/{train,hpo,models}.py`,
+`configs/hparams/{lcpfn,decpfn}.yaml`, `docs/TRAINING.md`. 42 unit + 2 gpu tests.
+
+- `training.TRAINERS: dict[name, run]` with `run(TrainRequest) -> Path`, `TrainRequest(model, problem,
+  head, size, hparams, seed, run, steps, time_limit, device, home)`. Names: lcpfn, lcpfn-last, decpfn,
+  decpfn-nostates, decpfn-nodeadtime, xdecpfn, ftpfn. `pfn train all --problem all` (binned/1M default,
+  `--head all --size all` expand).
+- `common.fit(batches=iterator | callable(start_step))`, `build_model(factory, seed)`, `resolve_device`,
+  `train_config_from_row`. `registry`: `ModelId`, `hparams_row(model, size, head, path)`,
+  `register_predictor_families()`. Variant ids are now in `predictors.base.LAZY_FAMILIES` (orchestrator).
+- `calib.json`: `{version, model, problem, head, features[..., "t"], input{mean,std}, time{lo,hi,mean,std},
+  target{mean,std}, edges (z-space, null for gaussian), n_bin, grid, T, samples{...}}`, raw edges =
+  `edges·std + mean`.
+- Spec choices: stats from 20,000 seeded pool rows, horizon edges from up to 100,000 J_T values,
+  validation cutoffs κ = round(0.2L)+1..round(0.99L), HPO stage 1 uncapped, stage 2 cap on training
+  time only, one pass of floor(N/128) steps.
+- Orchestrator: GPU tests are opt-in via `--run-gpu` only (conftest probe returns False).

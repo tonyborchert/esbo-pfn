@@ -1,0 +1,62 @@
+# The five simulated control problems (thesis Appendix: tab:app:problems, tab:app:grid,
+# tab:app:theta-box). `channels` are the level channels the state-conditioned predictors see,
+# `rate_channels` the measured rates (empty: rates are level differences). Grid strides are not
+# listed here, they follow from T (esbopfn.grids).
+
+boiler:
+  T: 701
+  can_crash: false
+  has_success: false
+  channels: [temperature]
+  rate_channels: []
+  theta:
+    - {name: turn_on_delay, lo: 5.0, hi: 500.0}
+
+threetank_pi:
+  T: 476
+  can_crash: false
+  has_success: false
+  channels: [V2, V3, V4]
+  rate_channels: []
+  theta:
+    - {name: K_P, lo: 0.0, hi: 3.0}
+    - {name: K_I, lo: 0.0, hi: 0.1}
+
+pt2_deadtime:
+  T: 501
+  can_crash: true
+  has_success: false
+  channels: [y]
+  rate_channels: []
+  theta:
+    - {name: log10_K_P, lo: -1.0, hi: 1.0}
+    - {name: log10_K_I, lo: -1.0, hi: 1.0}
+    - {name: log10_K_D, lo: -1.0, hi: 1.0}
+
+cartpole:
+  T: 1000
+  can_crash: true
+  has_success: false
+  channels: [x_cart, phi_pole]
+  rate_channels: [xdot_cart, phidot_pole]
+  theta:
+    - {name: K_P_cart, lo: 0.3, hi: 3.0}
+    - {name: K_D_cart, lo: 30.0, hi: 300.0}
+    - {name: K_P_pole, lo: 10.0, hi: 100.0}
+    - {name: K_D_pole, lo: 150.0, hi: 1500.0}
+
+furuta:
+  T: 600
+  can_crash: true
+  has_success: true
+  channels: [phi_arm, phi_pend]
+  rate_channels: [phidot_arm, phidot_pend]
+  theta:
+    - {name: mu, lo: 40.0, hi: 90.0}
+    - {name: E_bar, lo: 0.70, hi: 1.20}
+    - {name: q1, lo: 11.5, hi: 12.5}
+    - {name: q2, lo: 4.5, hi: 5.5}
+    - {name: q3, lo: 0.5, hi: 1.5}
+    - {name: q4, lo: 0.5, hi: 1.5}
+    - {name: r, lo: 0.5, hi: 1.5}
+    - {name: K_P_barrier, lo: 1.5, hi: 3.5}

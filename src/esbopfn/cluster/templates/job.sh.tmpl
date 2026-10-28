@@ -1,0 +1,11 @@
+#!/bin/bash
+{{sbatch}}
+# Rendered by `pfn submit` (profile {{profile}}, kind {{kind}}).
+set -euo pipefail
+{{modules}}
+{{pre}}
+export PFN_HOME={{home}}
+export PFN_PROFILE={{profile}}
+cd {{workdir}}
+{{shard}}
+{{command}}

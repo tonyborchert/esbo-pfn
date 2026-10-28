@@ -1,0 +1,10 @@
+# Run everything in place on this machine. No scheduler.
+name: local
+root: null                 # PFN_HOME default (./out) unless PFN_HOME is set
+scheduler: none
+launcher: uv run --no-sync
+defaults:
+  gen:       {cpus: 4, mem: 8G, time: "04:00:00", gpus: 0}
+  train:     {cpus: 4, mem: 16G, time: "04:00:00", gpus: 0}
+  bench:     {cpus: 4, mem: 8G, time: "04:00:00", gpus: 0}
+  bench_gpu: {cpus: 4, mem: 16G, time: "04:00:00", gpus: 0}

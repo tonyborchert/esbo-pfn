@@ -1,0 +1,17 @@
+# outputs
+out/
+# environments and caches
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.DS_Store
+.idea/
+# model and data artifacts
+*.pt
+*.ckpt
+*.f32
+# C++ build directories
+build/
+cpp/build*/
+cmake-build-*/

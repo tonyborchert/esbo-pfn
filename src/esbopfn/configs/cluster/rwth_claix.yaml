@@ -1,0 +1,22 @@
+# RWTH CLAIX-2023 (Slurm). Copy this file to add another cluster and edit accounts, partitions,
+# modules and root.
+name: rwth_claix
+root: ${HPCWORK}/esbo-pfn  # PFN_HOME inside jobs unless PFN_HOME is set at submit time
+scheduler: slurm
+accounts: {cpu: rwth2055, gpu: thes2287}
+partitions: {cpu: c23ms, gpu: c23g}
+modules: [GCCcore/13.3.0, Python/3.12.3]
+modules_cpp: [GCC/13.3.0, imkl/2024.2.0]
+pre: |
+  export PATH="$HOME/.local/bin:$PATH"
+  export OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
+  mkdir -p "$HOME/.cache"
+  flock "$HOME/.cache/esbo-pfn-uv-sync.lock" uv sync --frozen
+pre_gpu: |
+  export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+launcher: uv run --no-sync
+defaults:
+  gen:       {cpus: 24, mem: 16G, time: "04:00:00", gpus: 0}
+  train:     {cpus: 8,  mem: 64G, time: "02:00:00", gpus: 1}
+  bench:     {cpus: 8,  mem: 16G, time: "04:00:00", gpus: 0}
+  bench_gpu: {cpus: 8,  mem: 64G, time: "02:00:00", gpus: 1}

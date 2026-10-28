@@ -1,0 +1,42 @@
+[project]
+name = "esbo-pfn"
+version = "0.1.0"
+description = "Early stopping Bayesian optimization of controllers with prior-data fitted networks"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Tony Borchert" }]
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "numpy",
+    "scipy",
+    "torch",
+    "pyyaml",
+    "pandas",
+    "pyarrow",
+    "matplotlib",
+    "tabpfn",
+    "websockets",
+    "pytest",
+]
+
+[project.scripts]
+pfn = "esbopfn.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/esbopfn"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+markers = [
+    "unit: pure Python tests that run in seconds on a laptop (default)",
+    "cpp: needs the C++ generator binaries (--run-cpp or binaries found)",
+    "gpu: needs a CUDA or MPS device (--run-gpu or device found)",
+    "slurm: needs sbatch on PATH (--run-slurm or sbatch found)",
+    "hardware: needs a reachable rig server (--run-hardware only)",
+]

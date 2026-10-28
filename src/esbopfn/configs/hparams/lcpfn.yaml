@@ -1,0 +1,36 @@
+# LC-PFN hyperparameters (thesis Appendix, tab:app:hpo-configs and tab:app:hpo-grid-axes).
+# One row per (size, head). lcpfn-last uses these rows as well.
+model: lcpfn
+inherited_by: [lcpfn-last]
+
+fixed:
+  batch_size: 128
+  d_k: 16              # per-attention-head dimension, n_heads = d_model / 16
+  d_ff_factor: 2       # d_ff = 2 d_model
+  n_bin: 1000
+  warmup_frac: 0.25
+  clip_grad_norm: 1.0
+  bf16: true
+
+configs:
+  - {size: 100k, head: binned,   n_layers: 2,  d_model: 512, lr: 5.6e-4, weight_decay: 1.0e-4, dropout: 0.0}
+  - {size: 100k, head: gaussian, n_layers: 2,  d_model: 384, lr: 5.6e-4, weight_decay: 1.0e-4, dropout: 0.0}
+  - {size: 100k, head: linear,   n_layers: 3,  d_model: 384, lr: 5.6e-4, weight_decay: 1.0e-4, dropout: 0.0}
+  - {size: 1M,   head: binned,   n_layers: 12, d_model: 384, lr: 3.2e-4, weight_decay: 1.0e-4, dropout: 0.0}
+  - {size: 1M,   head: gaussian, n_layers: 12, d_model: 256, lr: 3.2e-4, weight_decay: 1.0e-4, dropout: 0.0}
+  - {size: 1M,   head: linear,   n_layers: 6,  d_model: 512, lr: 3.2e-4, weight_decay: 1.0e-4, dropout: 0.0}
+
+# The search that produced the rows above (pfn hpo lcpfn).
+hpo:
+  problem: cartpole
+  start: {head: linear, d_model: 512, n_layers: 3, weight_decay: 1.0e-6, dropout: 0.0}
+  stage1:              # sequential, each step keeps the best value of the previous steps
+    - {param: lr, values: [1.0e-4, 1.8e-4, 3.2e-4, 5.6e-4, 1.0e-3]}
+    - {param: weight_decay, values: [1.0e-6, 1.0e-4, 1.0e-2, 1.0e-1]}
+    - {param: dropout, values: [0.0, 0.1, 0.2, 0.35, 0.5]}
+  stage2:              # grid per head, lr / weight decay / dropout from stage 1
+    heads: [linear, binned, gaussian]
+    d_model: [256, 384, 512, 1024]
+    n_layers: [1, 2, 3, 6, 12]
+    time_limit_s: {100k: 25, 1M: 250}
+  selection: {metric: val_nll, cutoffs: [0.20, 0.99], units: raw}

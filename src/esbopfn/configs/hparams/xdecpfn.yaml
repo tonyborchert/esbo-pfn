@@ -1,0 +1,48 @@
+# XDecPFN hyperparameters (thesis Appendix, tab:app:ftpfn-xdecpfn-configs), fixed across all five
+# problems. No HPO. Gradient clipping is off for this model (docs/DEVIATIONS.md).
+model: xdecpfn
+
+fixed:
+  d_model: 384
+  layers_causal: 3
+  layers_cross: 6
+  n_heads: 6
+  d_ff: 768            # 2 d_model
+  dropout: 0.0
+  n_bin: 1000
+  target: lnJ          # inputs and bins on ln J, mapped back to J at inference
+  lr: 1.0e-3
+  weight_decay: 0.0
+  warmup_frac: 0.25
+  clip_grad_norm: null
+  bf16: true
+  n_sys: 8             # systems per step
+  n_reuse: 256         # examples per system
+  n_unrun: 8           # unrun queries per example
+  steps: 16550         # 132,400 trajectory sets / 8 per step
+
+configs:
+  - {variant: default, size: default}
+
+# Optimizer steps per problem (the configuration, step count included, is shared).
+steps:
+  boiler: 16550
+  threetank_pi: 16550
+  pt2_deadtime: 16550
+  cartpole: 16550
+  furuta: 16550
+
+data:
+  train: sets/{p}/xdecpfn
+  val: sets/{p}/xdecpfn_heldout
+  calib_instances: 2000   # instances of the training pool used for the statistics and bin edges
+  val_reuse: 16           # validation examples per held-out instance (fixed seed)
+
+# Total training FLOPs printed in the thesis (tab:app:matched-flops), for comparison with the
+# per-step count measured at the start of every run.
+thesis_flops:
+  boiler: 5.79e16
+  threetank_pi: 1.05e17
+  pt2_deadtime: 1.52e17
+  cartpole: 2.06e17
+  furuta: 2.06e17

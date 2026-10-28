@@ -153,3 +153,46 @@ Model ids: `<model>/<problem>/<variant>/<size>[/<run>]`, e.g. `decpfn/cartpole/b
 `decpfn-nostates/cartpole/binned/1M`, `lcpfn-last/furuta/binned/100k`, `xdecpfn/cartpole/default/default`,
 `ftpfn/boiler/default/default` (variant/size = `default` where there is only one).
 Hyperparameter files `src/esbopfn/configs/hparams/<model>.yaml`, one row per (size, head).
+
+## Phase 3c (strategies, ESBO loop) — done
+
+`strategies/{base,rules,loop,gp_based,pure_loop}.py`, `docs/STRATEGIES.md`. 25 tests.
+
+- Benchmark call: `s = make_strategy(id, problem, strategy_rng(seed), **overrides)`,
+  `rec = run_optimization(problem, instance, s, seed, n_max=None, t_budget=None, record_curves=False)`,
+  `rec.to_json()` / `RunRecord.from_json()`.
+- Ids: `esrs bo esbo-gp esbo-oracle` (`cold_refit_growth=0.05, n_candidates=2000, gp_iters=100`),
+  `esbo-t-tabpfn` (`L=50, model, predictor`), `decpfn decpfn-h` (`tau=0.9, crash_threshold=None,
+  model=decpfn/<p>/binned/1M, predictor`), `xdecpfn-pi xdecpfn-ei ftpfn-ei ftpfn-pi` (`acq, tau=0.99,
+  crash_threshold=None, model=<m>/<p>/default/default, predictor, n_uniform=400, n_local=1600,
+  top_k=5, local_scale=0.10`). Unknown params raise TypeError.
+- RunRecord: `problem, strategy, params, seed, instance_seed, T, n_init, n_max, t_budget, trials[],
+  incumbent_index[], incumbent_J[], timing{gp_acq, segment_gp, tabpfn_forecast, model_forecast,
+  model_acq}, wall_s, version=1`. TrialRecord: `theta, t_obs, J_obs, crashed, success, complete,
+  J_true, source (init|strategy), propose_s, stop_rule_s, end_s, J (curve, only with record_curves)`.
+- Seeds: init `substream(seed,"init")`, trial n `substream(seed, n)`, strategy `substream(seed,"strategy")`.
+- Spec choices: uniform draws continue until a successful complete trial exists (all strategies),
+  initial design always runs in full, exceed checked at t < T only, crash wins over stop at the same
+  step, matched rule conditions the incumbent with `truncate_below(J⁻)`, DecPFN decisions at its
+  `predictable_steps`, pure loops stop on `grids.decoder_grid`, EI/PI in raw J on the predictor's edges
+  (XDecPFN must return raw-J edges).
+
+## Phase 3b (XDecPFN, FT-PFN, thesis checkpoint import) — done
+
+`predictors/{xdecpfn,ftpfn}/{model,data,train,predictor,legacy}.py`, `training/train_{xdecpfn,ftpfn}.py`
+(`run`, `register`, `train`), `configs/hparams/{xdecpfn,ftpfn}.yaml`, `benchmarks/import_models.py`,
+`docs/CROSS_TRAJECTORY.md`. 17 unit + 2 gpu tests.
+
+- Ids `xdecpfn/<p>/default/default`, `ftpfn/<p>/default/default`. Predictors expose `predict(query,
+  context)`, `predict_unrun(thetas, context)`, `predictable_steps`. XDecPFN returns raw-J edges.
+- Thesis checkpoints: `import_thesis(from_dir, *extra_dirs, home=None, problems=None, overwrite=False)
+  -> list[ImportedModel]` imports the old weights as `xdecpfn/<p>/thesis/default` and
+  `ftpfn/<p>/thesis/default` via `legacy.py` model classes (old architecture reproduced exactly,
+  verified to 1e-17 / 1e-7 against the old code). In the Downloads bundle only cartpole and furuta
+  XDecPFN are the true 16,550-step thesis weights, pt2/threetank/boiler are the longer sweep cells
+  (noted in their config.yaml) until the cluster copies arrive.
+- FLOPs per step measured on cartpole: XDecPFN 1.3e13 (2.1e17 total), FT-PFN 2.2e12 (2.4e17 total).
+- Spec choices (docs/CROSS_TRAJECTORY.md): ΔJ stays raw while J is ln J for XDecPFN, θ z-scored by
+  the uniform-box moments, FT-PFN inputs clamped to the calibration range, calibration from the
+  first 2,000 instances / 20,000 contexts, validation 16 examples per held-out instance, first-fit
+  packing with SDPA boolean mask (no flex_attention).

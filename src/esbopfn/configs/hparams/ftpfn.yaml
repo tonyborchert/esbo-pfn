@@ -1,0 +1,43 @@
+# FT-PFN hyperparameters (thesis Appendix, tab:app:ftpfn-xdecpfn-configs), fixed across all five
+# problems. No HPO. Gradient clipping is off for this model (docs/DEVIATIONS.md).
+model: ftpfn
+
+fixed:
+  d_model: 512
+  n_layers: 6
+  n_heads: 4
+  d_ff: 1024           # 2 d_model
+  dropout: 0.0
+  n_bin: 1000
+  n_grid: 8            # curve grid points
+  target: raw          # raw J inputs and bins
+  lr: 1.0e-4
+  weight_decay: 0.0
+  warmup_frac: 0.25
+  clip_grad_norm: null
+  bf16: true
+  batch_size: 32       # contexts per step
+  n_unrun: 16          # unrun queries per context
+  steps: 109375        # 3,500,000 contexts / 32, a single pass
+
+configs:
+  - {variant: default, size: default}
+
+steps:
+  boiler: 109375
+  threetank_pi: 109375
+  pt2_deadtime: 109375
+  cartpole: 109375
+  furuta: 109375
+
+data:
+  train: contexts/{p}/ftpfn
+  val: contexts/{p}/ftpfn_heldout
+  calib_examples: 20000   # training contexts used for the statistics and bin edges
+
+thesis_flops:
+  boiler: 4.97e16
+  threetank_pi: 1.04e17
+  pt2_deadtime: 1.33e17
+  cartpole: 1.95e17
+  furuta: 2.21e17

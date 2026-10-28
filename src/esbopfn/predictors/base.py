@@ -504,6 +504,9 @@ LAZY_FAMILIES: dict[str, str] = {
     "segment-gp": "esbopfn.predictors.segment_gp:make_predictor",
     "tabpfn": "esbopfn.predictors.tabpfn:make_predictor",
     "segment-tabpfn": "esbopfn.predictors.segment_tabpfn:make_predictor",
+    "decpfn-nostates": "esbopfn.predictors.decpfn:make_nostates_predictor",
+    "decpfn-nodeadtime": "esbopfn.predictors.decpfn:make_nodeadtime_predictor",
+    "lcpfn-last": "esbopfn.predictors.lcpfn:make_last_predictor",
 }
 
 #: Attribute a family module exposes for convention-based discovery (see :func:`get_predictor`).

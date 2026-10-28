@@ -20,9 +20,7 @@ def _probe(marker: str) -> bool:
 
         return all(p is not None for p in find_cpp_binaries().values())
     if marker == "gpu":
-        import torch
-
-        return bool(torch.cuda.is_available() or torch.backends.mps.is_available())
+        return False  # gpu trainings are slow, run them with --run-gpu
     if marker == "slurm":
         return shutil.which("sbatch") is not None
     return False  # hardware needs an explicit --run-hardware

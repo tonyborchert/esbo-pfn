@@ -42,8 +42,13 @@ from esbopfn.hardware.records import HwTrial
 from esbopfn.hardware.reset import config_dict
 from esbopfn.hardware.rigs import field_defaults, get_rig
 from esbopfn.hardware.system import RigSystem, RigTrialResult
-from esbopfn.strategies.base import Strategy, default_params, incumbent_index, make_strategy, \
-    sample_uniform
+from esbopfn.strategies.base import (
+    Strategy,
+    default_params,
+    incumbent_index,
+    make_strategy,
+    sample_uniform,
+)
 from esbopfn.strategies.loop import strategy_rng
 from esbopfn.util.seeds import derive_seed, substream
 
@@ -93,7 +98,7 @@ class StopDecider:
         self.T = T
         self.use_exceed = armed and strategy.uses_exceed and math.isfinite(J_minus)
         asks = armed or strategy.records_unarmed
-        self.steps = set(int(s) for s in strategy.decision_steps()) if asks else set()
+        self.steps = {int(s) for s in strategy.decision_steps()} if asks else set()
         self.stopped_by: str | None = None
 
     def __call__(self, k: int, running: Trial) -> bool:

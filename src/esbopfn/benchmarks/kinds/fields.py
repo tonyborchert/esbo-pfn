@@ -240,6 +240,18 @@ def read_field(blob_dir: Path, key: Key | None = None) -> FieldRun:
     return FieldRun(key=dict(key), **arrays)
 
 
+def field_index(problem: str, name: str, instances_seed: int | str = BENCH_SEED, db: Any = None
+                ) -> dict[tuple[int, int], tuple[Key, Path]]:
+    """``(instance, seed) -> (key, blob_dir)`` of the finished runs of a field."""
+    from esbopfn.benchmarks.db import Db
+
+    db = db or Db()
+    out = {}
+    for u in db.query("fields", problem=problem, field=name, instances_seed=instances_seed):
+        out[(int(u.key["instance"]), int(u.key["seed"]))] = (u.key, Path(u.blob_dir))
+    return out
+
+
 def load_field_runs(problem: str, name: str, instances_seed: int | str = BENCH_SEED,
                     db: Any = None, keys: list[Key] | None = None) -> list[FieldRun] | None:
     """All runs of a field (seed-major) or None if any of them is not done."""

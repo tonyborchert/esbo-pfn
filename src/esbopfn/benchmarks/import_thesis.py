@@ -334,7 +334,7 @@ def import_ladder_parquet(db: Db, path: Path, overwrite: bool = False) -> bool:
         df.to_parquet(d / "predictions.parquet", index=False)
         meta = {"key": key, "model": model, "source": str(path),
                 "thesis_meta": json.loads(side.read_text()) if side.exists() else {},
-                "context_aware": True, "crash_aware": True, "n_rows": int(len(df))}
+                "context_aware": True, "crash_aware": True, "n_rows": len(df)}
         (d / "meta.json").write_text(json.dumps(meta, indent=1))
 
     return store(db, "prediction_ladder", key, write, overwrite)

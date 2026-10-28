@@ -26,9 +26,10 @@ from __future__ import annotations
 import math
 import time
 from collections import defaultdict
+from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
-from typing import Any, Iterator
+from typing import Any
 
 import numpy as np
 
@@ -301,12 +302,7 @@ class RigReset:
             if abs(self.arm(state)) > math.radians(c.settle_arm_deg):
                 state, _ = self.center_arm()
                 recenters += 1
-            calm = [0]
-
-            def rested(s: np.ndarray) -> bool:
-                calm[0] = calm[0] + 1 if self._still(s) else 0
-                return calm[0] >= calm_need
-
+            rested = self._dwell_test(calm_need)
             left = budget - (self._steps_total() - used_before)
             with self._phases.phase(f"{prefix}_brake"):
                 state, _ = self._brake_loop(min(c.settle_brake_max_s, max(0, left) / c.frequency),
@@ -337,6 +333,16 @@ class RigReset:
                        f"{prefix}_hang_deg": math.degrees(abs(abs(float(state[1])) - math.pi)),
                        f"{prefix}_arm_dot": float(state[2]),
                        f"{prefix}_pend_dot": float(state[3])}
+
+    def _dwell_test(self, need: int) -> Any:
+        """``test(state)``: true once ``need`` consecutive states were still."""
+        calm = [0]
+
+        def test(state: np.ndarray) -> bool:
+            calm[0] = calm[0] + 1 if self._still(state) else 0
+            return calm[0] >= need
+
+        return test
 
     def _steps_total(self) -> int:
         return sum(self._phases.steps.values())

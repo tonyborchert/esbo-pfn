@@ -8,10 +8,9 @@ import pytest
 
 from esbopfn.benchmarks import instances as inst
 from esbopfn.benchmarks import tasks as T
-from esbopfn.benchmarks.db import Db
+from esbopfn.benchmarks.db import Db, key_hash
 from esbopfn.benchmarks.kinds import discover_kinds
 from esbopfn.benchmarks.runner import PlannedUnit, run_units
-from esbopfn.benchmarks.db import key_hash
 
 
 def test_screen_stats():
@@ -38,7 +37,7 @@ def _instances_unit(db, problem="boiler", count=1):
 
 def test_instances_kind_idempotent(pfn_home):
     db = Db()
-    key, first = _instances_unit(db)
+    _, first = _instances_unit(db)
     assert first == (1, 0)
     assert _instances_unit(db)[1] == (0, 1)
     loaded = inst.load_instances("boiler")
@@ -162,8 +161,8 @@ def _synthetic_field(db, problem="boiler"):
 
 
 def test_prediction_unit_with_fake_predictor(pfn_home):
-    from esbopfn.benchmarks.kinds.prediction import cutoff_steps
     from esbopfn.benchmarks.kinds.fields import load_field_runs
+    from esbopfn.benchmarks.kinds.prediction import cutoff_steps
     from esbopfn.predictors.base import register_predictor_family
 
     fake = _FakePredictor()

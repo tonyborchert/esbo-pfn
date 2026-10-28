@@ -106,7 +106,7 @@ def score(runs: Sequence[HwRun], predictor: Any, spec: ProblemSpec, *,
         for n in rungs:
             if n != FULL and i < n:
                 continue
-            ctx_idx = range(0, i) if n == FULL else range(i - n, i)
+            ctx_idx = range(i) if n == FULL else range(i - n, i)
             context = [cache.get(run, j) for j in ctx_idx] if aware else []
             for frac, c in zip(cutoff_fracs, raw_cutoffs(t, cutoff_fracs)):
                 s = snap(c, steps)
@@ -154,8 +154,8 @@ def summarize(df: pd.DataFrame, eligible: dict[int, int] | None = None) -> dict[
             key = str(int(n)) if int(n) != FULL else "full"
             out["median_ll"][key] = float(ok.ll.median()) if len(ok) else math.nan
             out["median_ll_all"][key] = float(g.ll.median())
-            out["n_scored"][key] = int(len(ok))
-            out["n_scored_all"][key] = int(len(g))
+            out["n_scored"][key] = len(ok)
+            out["n_scored_all"][key] = len(g)
         if df["infer_s"].notna().any():
             for n, g in df.groupby("n_ctx"):
                 key = str(int(n)) if int(n) != FULL else "full"

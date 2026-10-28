@@ -10,8 +10,13 @@ import numpy as np
 import pytest
 
 from esbopfn.benchmarks.db import Db
-from esbopfn.benchmarks.import_hardware import (CELL_MAP, THESIS_CELL_PARAMS, import_rig_logs,
-                                                import_hwpred_results, thesis_key)
+from esbopfn.benchmarks.import_hardware import (
+    CELL_MAP,
+    THESIS_CELL_PARAMS,
+    import_hwpred_results,
+    import_rig_logs,
+    thesis_key,
+)
 from esbopfn.hardware import records
 from esbopfn.hardware.store import load_runs
 from esbopfn.hardware.system import stage_cost

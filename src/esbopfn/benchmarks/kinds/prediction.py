@@ -244,7 +244,7 @@ def select_tasks(df: pd.DataFrame, n_values: list[int] | None, crash: bool, part
 def run_scoring(key: Key, blob_dir: Path, table: str, stop_grid: bool) -> None:
     """Shared body of ``prediction`` and ``prediction_ladder``."""
     from esbopfn.benchmarks.db import Db
-    from esbopfn.benchmarks.kinds.fields import read_field
+    from esbopfn.benchmarks.kinds.fields import field_index, read_field
     from esbopfn.benchmarks.tasks import load_tasks
     from esbopfn.problems.base import cached_spec
 
@@ -262,24 +262,20 @@ def run_scoring(key: Key, blob_dir: Path, table: str, stop_grid: bool) -> None:
     spec = cached_spec(problem)
     predictor = build_predictor(model, problem)
     context_aware = bool(getattr(predictor, "context_aware", False))
-    db = Db()
-    field_name = str(tasks_df.field.iloc[0])
-    inst_seed = _instances_seed(key["tasks"])
+    index = field_index(problem, str(tasks_df.field.iloc[0]), _instances_seed(key["tasks"]), Db())
     runs: dict[str, Any] = {}
     rows: list[dict[str, Any]] = []
     t0 = time.perf_counter()
     for task in sel.itertuples(index=False):
         if task.run_id not in runs:
-            from esbopfn.benchmarks.kinds.fields import field_key
-
-            fk = field_key(problem, field_name, int(task.instance), int(task.seed), inst_seed)
-            runs = {task.run_id: read_field(db.blob_dir("fields", fk), fk)}
+            fk, blob = index[(int(task.instance), int(task.seed))]
+            runs = {task.run_id: read_field(blob, fk)}
         rows += score_task(predictor, spec, runs[task.run_id], task, context_aware=context_aware,
                            stop_grid=stop_grid and aware_crash)
     df = pd.DataFrame(rows, columns=PREDICTION_COLUMNS)
     df.to_parquet(Path(blob_dir) / "predictions.parquet", index=False)
     meta = {"key": key, "model": model, "context_aware": context_aware,
-            "crash_aware": aware_crash, "n_rows": int(len(df)), "n_tasks": int(len(sel)),
+            "crash_aware": aware_crash, "n_rows": len(df), "n_tasks": len(sel),
             "seconds": time.perf_counter() - t0, **environment()}
     (Path(blob_dir) / "meta.json").write_text(json.dumps(meta, indent=1))
 

@@ -217,3 +217,62 @@ Hyperparameter files `src/esbopfn/configs/hparams/<model>.yaml`, one row per (si
   validation cutoffs κ = round(0.2L)+1..round(0.99L), HPO stage 1 uncapped, stage 2 cap on training
   time only, one pass of floor(N/128) steps.
 - Orchestrator: GPU tests are opt-in via `--run-gpu` only (conftest probe returns False).
+
+## Phase 4b (hardware stack, rig importers) — done
+
+`hardware/{protocol,client,sim_plant,reset,system,records,store,rigs,runner,metrics,prediction_bench}.py`,
+`hardware/server/`, `benchmarks/kinds/{hardware_optimization,hardware_prediction}.py`,
+`benchmarks/import_hardware.py`, `commands/hw.py` (`run|status|list|pause|bench-pred|import-logs|
+import-pred|serve`), `configs/{rigs.yaml,benchmarks/hardware.yaml}`, `docs/HARDWARE.md`. 45 tests.
+
+- Runner re-implements the ESBO loop online (shares `incumbent_index, sample_uniform, strategy_rng`
+  and the seed streams with `strategies.loop`), resumable and replay-exact on the sim plant.
+- `hardware_optimization` key `{rig, method, params, seed, n_max, t_budget, provenance}`, blob
+  `run.json` + `trials.jsonl` (fields: `index, theta, source, T, t_obs, outcome, crash_step, success,
+  J_obs, J, x[[arm,pend]], xdot, u, kick_sign, incumbent_index, incumbent_J, timings{propose_s,
+  reset_s, control_s, stop_rule_s, end_s, total_s}, reset{...}, max_arm_deg, mean_pend_final_deg,
+  started_at, extra`).
+- `hardware_prediction` key `{rig, bench(ladder|ablation), predictor, model, ladder, cutoff_fracs,
+  methods, logs, provenance}`, `scores.parquet` (`rig, method, seed, query_index, n_ctx, n_ctx_used,
+  cutoff_frac, cutoff_step, step, predictor, ll, p_crash, crashed, target_J, query_t, infer_s`),
+  `summary.json` (`median_ll, median_ll_all, n_scored, seconds_per_prediction, ...`).
+- `hardware/metrics.py`: `reset_reference, wall_axis, j_best, regret_curves(axis), crash_curves,
+  regret_at_fractions, cost_curves, incumbent_at, acquisition_wait, crash_counts, band`.
+- Importers `import_rig_logs(root, rig_name, home, cells, seeds, overwrite)`,
+  `import_hwpred_results(dir, home)`, `import_all(impl_root, home)`. Local import: 60 runs, 8208
+  trials, 14 prediction units. Thesis hardware numbers reproduced exactly from the import.
+- Thesis ladder medians = `median_ll_all` (crashed included), ablation = `median_ll`.
+- Open: family `decpfn-nodeadtime-nostates` (ablation arm) missing in TRAINERS/LAZY_FAMILIES.
+
+## Phase 4a (simulation benchmark kinds, metrics, thesis importers) — done
+
+`benchmarks/{instances,tasks,metrics,groups,import_thesis,import_timing}.py`, kinds `instances fields
+prediction prediction_ladder prediction_timing optimization optimization_timing generation_speed
+landscapes thesis_series`, `commands/import_.py` (`pfn import thesis-results|thesis-models`),
+`configs/benchmarks/{priors,single_trajectory,tabpfn,cross_trajectory,prediction_summary,optimization,
+generation_speed}.yaml`, `docs/BENCHMARKS.md`. 37 tests. `pfn bench run` re-plans so dependent units
+(prediction after fields) appear, `--kind` filter.
+
+- Keys/blobs: instances `{problem, seed, count}` → `instances.json`; fields `{problem, field, instance,
+  seed, n_trials, instances_seed}` → `trials.npz (theta, t_obs, crash_step, success, J, x, xdot)`,
+  `field.json`, `run.json`; task tables `benchmarks/tasks/<p>/{tasks-oracle65, ladder-oracle181}.parquet`
+  (`task_id, problem, field, run_id, instance, seed, run_order, n_ctx, query_index, T, t_obs,
+  crash_step, crashed, target_J, selected, crash_selected`); prediction `{problem, model, checkpoint,
+  tasks, tasks_digest, n, part}` → `predictions.parquet` (`task_id, run_id, instance, seed, n_ctx,
+  query_index, crashed, crash_step, target_J, cutoff_frac, cutoff_fallback, cutoff_step, J_obs, ll,
+  p_crash, dist, edges, probs, mean, var, seconds`); prediction_timing → `timing.json`
+  (`seconds_median, ...`); optimization `{problem, instance, strategy, params, seed, budget, instances_seed}`
+  → `run.json`; generation_speed → `speed.json`; landscapes → `landscape.npz` / `samples.npz`;
+  thesis_series `{figure, problem, series, variant, provenance}` → `series.json`.
+- `metrics.py`: `trial_scores, collapse_context_blind, median_scores, med_d(participants), ll_norm,
+  pooled_median, pareto_front, stop_curve, steps_saved_at, ladder_curve, incumbent_vs_trials,
+  incumbent_vs_time, j_best, j_esrs, scaled_regret, problem_median, cross_problem_mean, log10_display,
+  regret_at_fraction, mean_crash_count, timing_split, cost_rank`.
+- Local thesis import: instances 5, task tables 5, prediction_ladder 7, prediction_timing 382,
+  thesis_series 898. `fig1_cross.csv` = the numbers the thesis quotes (variant `thesis`),
+  `fig1_cross_5prob_canonmed.csv` = pre-z-score (variant `canonmed`).
+- Rebuildable locally: context ladder (raw), fig3 cross/sheet, TabPFN panel, heads sheet, FT/XDec stop
+  sheet, fig2 sheet (no noStates curve), optplay crashes, violins at 100% (aggregates). Not locally:
+  optplay cross/sheet/timing, LC/DecPFN stop sheet (cluster raw data needed).
+- Open: `record_curves=False` in fields (curves live in the npz), native specs select
+  `default/default` model ids (thesis weights are `thesis/default`).

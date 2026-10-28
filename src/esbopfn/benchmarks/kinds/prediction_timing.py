@@ -102,7 +102,7 @@ def summarize(times: list[float]) -> dict[str, Any]:
 
 def run(key: Key, blob_dir: Path) -> None:
     from esbopfn.benchmarks.db import Db
-    from esbopfn.benchmarks.kinds.fields import field_key, read_field
+    from esbopfn.benchmarks.kinds.fields import field_index, read_field
     from esbopfn.benchmarks.kinds.prediction import _instances_seed
     from esbopfn.benchmarks.tasks import load_tasks
     from esbopfn.problems.base import cached_spec
@@ -114,12 +114,11 @@ def run(key: Key, blob_dir: Path) -> None:
     df = found[0]
     sel = df[df.selected & (df.n_ctx == int(key["n_ctx"]))].sort_values("run_order")
     sel = sel.head(int(key["queries"]))
-    db = Db()
-    seed = _instances_seed(key["tasks"])
+    index = field_index(problem, str(df.field.iloc[0]), _instances_seed(key["tasks"]), Db())
     runs = []
     for t in sel.itertuples(index=False):
-        fk = field_key(problem, str(t.field), int(t.instance), int(t.seed), seed)
-        runs.append(read_field(db.blob_dir("fields", fk), fk))
+        fk, blob = index[(int(t.instance), int(t.seed))]
+        runs.append(read_field(blob, fk))
     predictor = build_predictor(key["model"], problem)
     times = time_predictor(predictor, cached_spec(problem), runs, list(sel.itertuples(index=False)),
                            float(key["cutoff_frac"]), int(key["repeats"]), int(key["warmup"]))
@@ -131,7 +130,5 @@ def run(key: Key, blob_dir: Path) -> None:
 def read_timing(blob_dir: Path) -> dict[str, Any]:
     return json.loads((Path(blob_dir) / "timing.json").read_text())
 
-
-__all__ = ["KIND", "checkpoint_hash", "read_timing", "summarize", "time_predictor"]
 
 KIND = BenchmarkKind(name="prediction_timing", enumerate=enumerate_units, run=run)

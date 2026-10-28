@@ -22,8 +22,8 @@ NAME = "hardware_optimization"
 def enumerate_keys(spec: dict[str, Any]) -> list[dict[str, Any]]:
     """Keys of the rig field for ``spec`` (``configs/benchmarks/hardware.yaml`` layout:
     ``rigs``, ``optimization: {methods, seeds, provenance}``)."""
-    from esbopfn.hardware.runner import method_params, unit_key
     from esbopfn.hardware.rigs import field_defaults
+    from esbopfn.hardware.runner import method_params, unit_key
 
     opt = dict(spec.get("optimization") or {})
     fd = field_defaults()

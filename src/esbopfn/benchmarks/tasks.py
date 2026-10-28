@@ -170,7 +170,7 @@ def save_tasks(df: pd.DataFrame, problem: str, name: str, meta: dict[str, Any] |
     out.mkdir(parents=True, exist_ok=True)
     h = digest(df)
     df.to_parquet(out / f"{name}.parquet", index=False)
-    info = {"problem": problem, "name": name, "digest": h, "n_tasks": int(len(df)),
+    info = {"problem": problem, "name": name, "digest": h, "n_tasks": len(df),
             "n_selected": int(df.selected.sum()), "n_crash_selected": int(df.crash_selected.sum()),
             "contexts": sorted(int(n) for n in df.n_ctx.unique()), **(meta or {})}
     (out / f"{name}.json").write_text(json.dumps(info, indent=1))

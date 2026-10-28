@@ -60,7 +60,7 @@ class RigClient:
                                  max_size=None)
                 # the connection is closed explicitly by close() and _discard()
                 self._ws = ws.__enter__()
-            except Exception as exc:  # noqa: BLE001 - every connect failure is a rig error
+            except Exception as exc:
                 raise RigError(f"cannot connect to the rig server at {self.url}: {exc}") from exc
             self.connections += 1
             if self.connections > 1:
@@ -78,7 +78,7 @@ class RigClient:
     def __enter__(self) -> RigClient:
         return self.connect()
 
-    def __exit__(self, *exc: Any) -> None:
+    def __exit__(self, *exc: object) -> None:
         self.close()
 
     def _send(self, cmd: str, **fields: Any) -> dict[str, Any]:
@@ -93,7 +93,7 @@ class RigClient:
                              "the board is not held by another process)") from None
         except protocol.ProtocolError:
             raise
-        except Exception as exc:  # noqa: BLE001 - connection closed or broken
+        except Exception as exc:
             self._discard()
             raise RigError(f"connection to {self.url} failed during {cmd!r}: {exc}") from exc
         msg = protocol.decode_reply(raw)

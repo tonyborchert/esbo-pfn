@@ -1,4 +1,5 @@
-"""Training of DecPFN and its variants ``decpfn-nostates`` and ``decpfn-nodeadtime``."""
+"""Training of DecPFN and its variants ``decpfn-nostates``, ``decpfn-nodeadtime`` and
+``decpfn-nodeadtime-nostates``."""
 
 from __future__ import annotations
 
@@ -20,11 +21,11 @@ from esbopfn.training.single_trajectory_data import (
 
 log = logging.getLogger(__name__)
 
-VARIANTS = ("decpfn", "decpfn-nostates", "decpfn-nodeadtime")
+VARIANTS = ("decpfn", "decpfn-nostates", "decpfn-nodeadtime", "decpfn-nodeadtime-nostates")
 
 
 def uses_states(variant: str) -> bool:
-    return variant != "decpfn-nostates"
+    return not variant.endswith("-nostates")
 
 
 def build(calib: Calib, row: dict[str, Any]) -> DecPFN:

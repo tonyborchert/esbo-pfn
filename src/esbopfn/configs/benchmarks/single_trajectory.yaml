@@ -56,6 +56,12 @@ participants:
   - "lcpfn/{p}/gaussian/100k"
   - "lcpfn/{p}/linear/100k"
 figures:
+  heads:
+    center: mean          # per-problem centering of the arms (the thesis figure uses the mean)
+  gridsearch:
+    problem: cartpole
+    sizes: [100k, 1M]
+    caps: {100k: 25, 1M: 250}   # x view limit in seconds (the stage-2 wall-clock caps)
   stop_sheet:
     problems: [pt2_deadtime, cartpole, furuta]
     models: ["decpfn/{p}/binned/1M", "decpfn-nostates/{p}/binned/1M", "lcpfn/{p}/binned/1M",

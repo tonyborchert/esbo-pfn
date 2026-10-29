@@ -9,11 +9,12 @@ from pathlib import Path
 log = logging.getLogger(__name__)
 
 #: Models with an output head and a training size axis (the rest train one default variant).
-AXES_MODELS = ("lcpfn", "lcpfn-last", "decpfn", "decpfn-nostates", "decpfn-nodeadtime")
+AXES_MODELS = ("lcpfn", "lcpfn-last", "decpfn", "decpfn-nostates", "decpfn-nodeadtime",
+               "decpfn-nodeadtime-nostates")
 HEADS = ("binned", "gaussian", "linear")
 SIZES = ("100k", "1M")
 #: Models that exist for some problems only.
-MODEL_PROBLEMS = {"decpfn-nodeadtime": ("furuta",)}
+MODEL_PROBLEMS = {"decpfn-nodeadtime": ("furuta",), "decpfn-nodeadtime-nostates": ("furuta",)}
 
 
 def register(subparsers: argparse._SubParsersAction) -> None:

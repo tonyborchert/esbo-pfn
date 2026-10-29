@@ -77,7 +77,8 @@ def register(subparsers: argparse._SubParsersAction) -> None:
 
 
 def run(args: argparse.Namespace) -> int:
-    tree = paths()
+    from esbopfn.predictors.checkpoints import tabpfn_status
+
     print(f"{'python':<14}{sys.version.split()[0]} ({platform.platform()})")
     print(f"{'torch':<14}{torch_report()}")
     for tool, flag in (("cc", "--version"), ("c++", "--version"), ("cmake", "--version")):
@@ -85,9 +86,9 @@ def run(args: argparse.Namespace) -> int:
         print(f"{tool:<14}{_first_line([exe, flag]) if exe else 'missing'}")
     for hint in blas_hints():
         print(f"{'blas':<14}{hint}")
-    ckpt = tree.root / "checkpoints" / "tabpfn"
-    files = sorted(p.name for p in ckpt.glob("*")) if ckpt.is_dir() else []
-    print(f"{'tabpfn':<14}{ckpt}: {', '.join(files) if files else 'missing'}")
+    st = tabpfn_status()
+    detail = f"{st.path.name} ({st.size / 1e6:.1f} MB)" if st.present else "missing"
+    print(f"{'tabpfn':<14}{st.path.parent}: {detail}")
     for name, path in find_cpp_binaries().items():
         print(f"{name:<14}{path if path else 'not built'}")
     return 0

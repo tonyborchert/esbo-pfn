@@ -71,7 +71,11 @@ def test_prediction_units_appear_once_tasks_are_frozen(pfn_home):
     tab = next(k for k in keys if k["model"] == "tabpfn/50")
     assert tab["n"] == [2, 4, 8, 16, 32, 64] and tab["tasks_digest"] == T.digest(df)
     timing = [k for kind, k in groups.units(cfg) if kind == "prediction_timing"]
-    assert len(timing) == 5 * 7 + 6 + 5 + 6
+    # the three context-blind models (decpfn, lcpfn, decpfn-nostates) are timed at n = 0 only
+    assert len(timing) == 3 * 1 + 2 * 7 + 6 + 5 + 6
+    blind = [k for k in timing if k["model"] == "decpfn/boiler/binned/1M"]
+    assert [k["n_ctx"] for k in blind] == [0]
+    assert len([k for k in timing if k["model"] == "xdecpfn/boiler/default/default"]) == 7
 
 
 def _trials():

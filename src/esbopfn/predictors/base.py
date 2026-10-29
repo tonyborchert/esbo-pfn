@@ -506,6 +506,7 @@ LAZY_FAMILIES: dict[str, str] = {
     "segment-tabpfn": "esbopfn.predictors.segment_tabpfn:make_predictor",
     "decpfn-nostates": "esbopfn.predictors.decpfn:make_nostates_predictor",
     "decpfn-nodeadtime": "esbopfn.predictors.decpfn:make_nodeadtime_predictor",
+    "decpfn-nodeadtime-nostates": "esbopfn.predictors.decpfn:make_nodeadtime_nostates_predictor",
     "lcpfn-last": "esbopfn.predictors.lcpfn:make_last_predictor",
 }
 

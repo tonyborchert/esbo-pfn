@@ -1,7 +1,8 @@
 # DecPFN hyperparameters (thesis Appendix, tab:app:hpo-configs and tab:app:hpo-grid-axes).
-# One row per (size, head). decpfn-nostates and decpfn-nodeadtime use these rows as well.
+# One row per (size, head). decpfn-nostates, decpfn-nodeadtime and decpfn-nodeadtime-nostates use
+# these rows as well.
 model: decpfn
-inherited_by: [decpfn-nostates, decpfn-nodeadtime]
+inherited_by: [decpfn-nostates, decpfn-nodeadtime, decpfn-nodeadtime-nostates]
 
 fixed:
   batch_size: 128

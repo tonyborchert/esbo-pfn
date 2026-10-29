@@ -19,8 +19,8 @@ pfn models show decpfn/cartpole/binned/1M
 
 `pfn train <model> --problem P [--head binned|gaussian|linear|all] [--size 100k|1M|all]
 [--hparams FILE] [--seed S] [--run R] [--steps N] [--time-limit S] [--device auto|cuda|mps|cpu]`.
-Models: `lcpfn`, `lcpfn-last`, `decpfn`, `decpfn-nostates`, `decpfn-nodeadtime` (Furuta only),
-plus the models other packages register (`xdecpfn`, `ftpfn`). Head and size default to `binned`
+Models: `lcpfn`, `lcpfn-last`, `decpfn`, `decpfn-nostates`, `decpfn-nodeadtime` and
+`decpfn-nodeadtime-nostates` (Furuta only), plus the models other packages register (`xdecpfn`, `ftpfn`). Head and size default to `binned`
 and `1M`. `--steps` overrides the step count (debugging and smoke runs, a count beyond one pass
 over the data starts a fresh seeded pass), `--time-limit` caps the training time. A finished model
 directory is never retrained, an unfinished one resumes from its checkpoint. On a cluster, wrap the
@@ -37,6 +37,7 @@ A model id is `<model>/<problem>/<variant>/<size>[/<run>]`, the run defaults to 
 | `decpfn/<p>/<head>/<size>` | DecPFN |
 | `decpfn-nostates/<p>/<head>/<size>` | DecPFN-no-St, tokens `(J, ΔJ, t)` only |
 | `decpfn-nodeadtime/furuta/<head>/<size>` | DecPFN on the Furuta prior without dead time (hardware ablation) |
+| `decpfn-nodeadtime-nostates/furuta/<head>/<size>` | the same without the state channels, tokens `(J, ΔJ, t)` (hardware ablation) |
 | `xdecpfn/<p>/default/default`, `ftpfn/<p>/default/default` | cross-trajectory models |
 
 The directory of an id is `$PFN_HOME/models/<model>/<problem>/<variant>/<size>/<run>/` with
@@ -125,7 +126,8 @@ configs:
 hpo: {problem, start, stage1, stage2, selection}
 ```
 
-`lcpfn-last` reads `lcpfn.yaml`, `decpfn-nostates` and `decpfn-nodeadtime` read `decpfn.yaml`
+`lcpfn-last` reads `lcpfn.yaml`, `decpfn-nostates`, `decpfn-nodeadtime` and `decpfn-nodeadtime-nostates` read
+`decpfn.yaml`
 (`inherited_by`). The selected values are those of the thesis on every problem.
 
 ## Hyperparameter search

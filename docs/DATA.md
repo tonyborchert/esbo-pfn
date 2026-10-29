@@ -122,7 +122,7 @@ divide 100,000 and 1,000,000, so `traj/<p>/100k` is exactly chunks 0 to 9 of `tr
 
 `pfn data gen --for train <model> --problem P` generates what a model needs: `lcpfn` and
 `lcpfn-last` take `traj/P/1M` and `traj/P/val_lcpfn`, `decpfn` and `decpfn-nostates` take
-`traj/P/1M` and `traj/P/val`, `decpfn-nodeadtime` the two no-dead-time pools, `xdecpfn` the two
+`traj/P/1M` and `traj/P/val`, `decpfn-nodeadtime` and `decpfn-nodeadtime-nostates` the two no-dead-time pools, `xdecpfn` the two
 set pools and `ftpfn` the two context datasets.
 
 ## Seeds

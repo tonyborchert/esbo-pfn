@@ -32,8 +32,8 @@ import pandas as pd
 #: ``n_ctx`` of a context-blind model pooled over the context sizes.
 COLLAPSED_N = -1
 #: Families that ignore the context.
-CONTEXT_BLIND_FAMILIES = frozenset({"decpfn", "decpfn-nostates", "decpfn-nodeadtime", "lcpfn",
-                                    "lcpfn-last"})
+CONTEXT_BLIND_FAMILIES = frozenset({"decpfn", "decpfn-nostates", "decpfn-nodeadtime",
+                                    "decpfn-nodeadtime-nostates", "lcpfn", "lcpfn-last"})
 #: Display floor of the scaled regret before log10.
 REGRET_FLOOR = 1e-4
 #: Denominators ``J_ESRS - J_best`` at or below this leave the instance undefined (NaN).

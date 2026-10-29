@@ -8,6 +8,8 @@ optimization:
   provenance: thesis          # which rig logs the figures read: thesis (imported) or native
 prediction:
   logs: thesis                # rig logs the queries come from: thesis (imported) or native
+  provenance: thesis          # which prediction units the figures read: thesis (imported) or
+                              # native (computed by `pfn hw bench-pred` on the `logs` runs)
   ladder: [0, 1, 2, 5, 11, 22, 45, 90]
   cutoff_fracs: [0.1, 0.3, 0.5, 0.7, 0.9]
   predictors:
@@ -25,3 +27,13 @@ metrics:
   cost_window_s: 1000         # best successful raw cost over the first 1000 s
   incumbent_at_s: 500         # incumbent controller of the median seed at 500 s
   incumbent_methods: [esbo-gp, xdecpfn-pi]
+
+# Figures of the plot group `hardware` (src/esbopfn/plots/hardware.py), every entry optional.
+figures:
+  acq_wait_methods: [esbo-gp, bo, decpfn-h, decpfn, xdecpfn-pi]   # ESRS has no acquisition
+  ladder_predictors: [segment-gp, decpfn, xdecpfn]
+  ladder_metric: median_ll_all   # the ladder medians of the thesis figure include crashed queries
+  ablation_metric: median_ll     # the ablation bars use the non-crashed queries
+  context_blind: [decpfn]        # drawn as one pooled point
+  pred_y_cutoff: -7.0            # ladder medians below this are omitted
+  legend_on_first_rig_only: true

@@ -106,3 +106,48 @@ def test_absent_model_raises(pfn_home):
         get_predictor("decpfn-nodeadtime/furuta/binned/1M", "furuta")
     with pytest.raises(ValueError):
         get_predictor("decpfn/boiler/binned/1M", "cartpole")
+
+
+# ----------------------------------------------------------------------------- nodeadtime-nostates
+def test_nodeadtime_nostates_arm_is_wired(pfn_home):
+    from esbopfn.cli import build_parser
+    from esbopfn.commands.train import requests
+    from esbopfn.generators.datasets import load_catalog
+    from esbopfn.predictors.base import LAZY_FAMILIES
+    from esbopfn.training import TRAINERS, get_trainer
+
+    fam = "decpfn-nodeadtime-nostates"
+    assert TRAINERS[fam] == TRAINERS["decpfn-nodeadtime"] and callable(get_trainer(fam))
+    assert LAZY_FAMILIES[fam].endswith(":make_nodeadtime_nostates_predictor")
+    assert load_catalog().for_model(fam, "furuta") == load_catalog().for_model(
+        "decpfn-nodeadtime", "furuta") == ["traj/furuta/1M_nodeadtime", "traj/furuta/val_nodeadtime"]
+    assert registry.hparams_base(fam) == "decpfn"
+    registry.register_predictor_families()
+    with pytest.raises(registry.ModelNotTrained,
+                       match=f"pfn train {fam} --problem furuta --head binned --size 1M"):
+        get_predictor(f"{fam}/furuta/binned/1M", "furuta")
+    reqs = requests(build_parser().parse_args(["train", "all", "--problem", "all"]))
+    assert [r.problem for r in reqs if r.model == fam] == ["furuta"]
+    with pytest.raises(SystemExit):
+        requests(build_parser().parse_args(["train", fam, "--problem", "cartpole"]))
+
+
+def test_nodeadtime_nostates_trains_and_loads(tmp_path, pfn_home):
+    simulate_pool(tmp_path / "train", "furuta", 64, seed=21, dead_time=False)
+    simulate_pool(tmp_path / "val", "furuta", 16, seed=22, dead_time=False)
+    train_pool, val_pool = PoolReader(tmp_path / "train"), PoolReader(tmp_path / "val")
+    fam = "decpfn-nodeadtime-nostates"
+    out = train("furuta", "binned", "100k", ROW, seed=0, steps=10, device="cpu", variant=fam,
+                train_pool=train_pool, val_pool=val_pool, stat_rows=32)
+    assert out == registry.model_dir(f"{fam}/furuta/binned/100k")
+    files = registry.load_model(out)
+    assert files.model_cfg["family"] == fam
+    assert files.model_cfg["n_features"] == 2 and files.calib["features"] == ["J", "dJ", "t"]
+    registry.register_predictor_families()
+    pred = get_predictor(f"{fam}/furuta/binned/100k", "furuta", device="cpu")
+    assert not pred.states and not pred.context_aware
+    traj = val_pool.pool.read(0)
+    step = int(pred.predictable_steps()[0])
+    assert traj.crash_step is None or traj.crash_step > step
+    assert pred.features(Trial(traj, step)).shape[1] == 3  # J, dJ, t without the states
+    assert isinstance(pred.predict(Trial(traj, step), []), BarPrediction)

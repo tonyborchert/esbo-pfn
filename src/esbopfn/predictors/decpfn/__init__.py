@@ -1,9 +1,10 @@
 """DecPFN: causal decoder predicting the total cost from a running trajectory prefix.
 
 ``model`` (network), ``train`` (training), ``predictor`` (inference). Predictor ids
-``decpfn/<problem>/<head>/<size>[/<run>]`` and the same for ``decpfn-nostates`` and
-``decpfn-nodeadtime`` (factories :func:`make_nostates_predictor` and
-:func:`make_nodeadtime_predictor`).
+``decpfn/<problem>/<head>/<size>[/<run>]`` and the same for ``decpfn-nostates``,
+``decpfn-nodeadtime`` and ``decpfn-nodeadtime-nostates`` (factories
+:func:`make_nostates_predictor`, :func:`make_nodeadtime_predictor` and
+:func:`make_nodeadtime_nostates_predictor`).
 Importing this package does not import torch.
 """
 
@@ -38,3 +39,8 @@ def make_nostates_predictor(args: tuple[str, ...], spec: ProblemSpec, **kw: Any)
 def make_nodeadtime_predictor(args: tuple[str, ...], spec: ProblemSpec, **kw: Any):
     """Registry factory for ``decpfn-nodeadtime/...``."""
     return _make("decpfn-nodeadtime", args, spec, **kw)
+
+
+def make_nodeadtime_nostates_predictor(args: tuple[str, ...], spec: ProblemSpec, **kw: Any):
+    """Registry factory for ``decpfn-nodeadtime-nostates/...``."""
+    return _make("decpfn-nodeadtime-nostates", args, spec, **kw)

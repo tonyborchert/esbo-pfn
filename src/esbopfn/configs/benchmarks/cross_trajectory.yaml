@@ -27,4 +27,5 @@ prediction_timing:
 figures:
   stop_sheet:
     problems: [pt2_deadtime, cartpole, furuta]
+    n: [0, 2, 4, 8, 16, 32, 64]
     max_false_stop: 0.1

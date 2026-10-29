@@ -1,6 +1,8 @@
 """Kind ``prediction_timing``: inference seconds per prediction of one predictor at one context
 size (thesis setup, prediction metrics: median inference time per prediction on the workstation).
 
+A context-blind model (:func:`esbopfn.benchmarks.metrics.is_context_blind`, predictor
+``context_aware`` False) gets one unit at ``n_ctx = 0`` since its time does not depend on ``n``.
 The first ``queries`` selected non-crashed tasks at context size ``n_ctx`` are predicted at the
 cutoff ``cutoff_frac`` of ``T`` (snapped as in ``prediction``). Each query is predicted ``warmup``
 times untimed, then ``repeats`` times timed (CUDA synchronized). The device is recorded, so the
@@ -37,6 +39,7 @@ from esbopfn.benchmarks.kinds.prediction import (
 
 def enumerate_units(cfg: dict[str, Any]) -> list[Key]:
     from esbopfn.benchmarks.groups import instances_seed, problems, section
+    from esbopfn.benchmarks.metrics import is_context_blind
     from esbopfn.benchmarks.tasks import ensure_tasks
 
     sec = section(cfg, "prediction_timing")
@@ -52,7 +55,11 @@ def enumerate_units(cfg: dict[str, Any]) -> list[Key]:
             if m.get("problems") and p not in m["problems"]:
                 continue
             model = resolve_model(m["id"], p)
-            for n in m.get("n", sec.get("n", pred_sec.get("n", sorted(df.n_ctx.unique())))):
+            ns = [int(n) for n in m.get("n", sec.get("n", pred_sec.get("n",
+                                                              sorted(df.n_ctx.unique()))))]
+            if is_context_blind(model) and ns:
+                ns = [0 if 0 in ns else min(ns)]  # one unit, the context is never read
+            for n in ns:
                 keys.append({"problem": p, "model": model, "checkpoint": checkpoint_hash(model),
                              "tasks": df_name("tasks", sec.get("field"), instances_seed(cfg)),
                              "tasks_digest": h, "n_ctx": int(n),

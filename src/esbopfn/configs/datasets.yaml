@@ -97,5 +97,6 @@ models:
   decpfn: ["traj/{p}/1M", "traj/{p}/val"]
   decpfn-nostates: ["traj/{p}/1M", "traj/{p}/val"]
   decpfn-nodeadtime: ["traj/{p}/1M_nodeadtime", "traj/{p}/val_nodeadtime"]
+  decpfn-nodeadtime-nostates: ["traj/{p}/1M_nodeadtime", "traj/{p}/val_nodeadtime"]
   xdecpfn: ["sets/{p}/xdecpfn", "sets/{p}/xdecpfn_heldout"]
   ftpfn: ["contexts/{p}/ftpfn", "contexts/{p}/ftpfn_heldout"]

@@ -227,6 +227,8 @@ def hparams_row(model: str, size: str | None = None, head: str | None = None,
 PREDICTOR_FAMILIES: dict[str, str] = {
     "decpfn-nostates": "esbopfn.predictors.decpfn:make_nostates_predictor",
     "decpfn-nodeadtime": "esbopfn.predictors.decpfn:make_nodeadtime_predictor",
+    "decpfn-nodeadtime-nostates":
+        "esbopfn.predictors.decpfn:make_nodeadtime_nostates_predictor",
     "lcpfn-last": "esbopfn.predictors.lcpfn:make_last_predictor",
 }
 

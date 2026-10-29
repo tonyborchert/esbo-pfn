@@ -41,7 +41,7 @@ class DecPFNPredictor(PredictorBase):
         if self.calib.problem != spec.name:
             raise ValueError(f"model trained on {self.calib.problem}, asked for {spec.name}")
         self.spec = spec
-        self.states = self.family != "decpfn-nostates"
+        self.states = not self.family.endswith("-nostates")
         self.head = make_head(self.calib)
         self.device = resolve_device(device)
         self.model = DecPFN(self.cfg)

@@ -48,9 +48,37 @@ optimization_timing:
 # J_best of an instance: the best successful final cost of any run of these strategies (every
 # strategy of the optimization section). J_ESRS: the final incumbent of esrs.
 reference_strategies: all
+# J_best of problems drawn from the thesis import: optplay_reference (the best successful final
+# cost over every thesis cell, which reproduces the thesis numbers) or declared (recomputed over
+# the imported cells of this spec).
+thesis_reference: optplay_reference
 main_strategies: [ESRS, BO, ESBO-GP, ESBO-T-TabPFN, DecPFN, DecPFN-H, XDecPFN-PI, FT-PFN-EI,
                   ESBO-Oracle]
 figures:
   cross: {trials_axis: "15 * min(d, 4)", time_points: 300, regret_floor: 1.0e-4}
   violins: {fractions: [0.5, 1.0]}
   crashes: {problems: [pt2_deadtime, cartpole, furuta], time_points: 300}
+  # fig:app:optplay-decpfn-thresholds-violin: DecPFN and DecPFN-H at tau 0.9 / 0.99 (tau_crash
+  # 0.9), 50 % and 100 % of the time budget. `group` is the header, `tick` the label under the
+  # violin, `thesis` the imported series of the cell.
+  decpfn_thresholds:
+    cells:
+      - {id: decpfn, params: {crash_threshold: 0.9}, group: DecPFN, tick: "0.9", thesis: decpfn}
+      - {id: decpfn, params: {tau: 0.99, crash_threshold: 0.9}, group: DecPFN, tick: "0.99",
+         thesis: "decpfn@tau=0.99"}
+      - {id: decpfn-h, params: {crash_threshold: 0.9}, group: DecPFN-H, tick: "0.9",
+         thesis: decpfn-h}
+      - {id: decpfn-h, params: {tau: 0.99, crash_threshold: 0.9}, group: DecPFN-H, tick: "0.99",
+         thesis: "decpfn-h@tau=0.99"}
+  # fig:app:optplay-qx-variants-violin: the eight pure-loop cells (model / acquisition / tau),
+  # naive rule, 100 % of the time budget.
+  qx_variants:
+    cells:
+      - {id: xdecpfn-ei, params: {tau: 0.9}, group: XDecPFN/EI, tick: "0.9"}
+      - {id: xdecpfn-ei, group: XDecPFN/EI, tick: "0.99"}
+      - {id: xdecpfn-pi, params: {tau: 0.9}, group: XDecPFN/PI, tick: "0.9"}
+      - {id: xdecpfn-pi, group: XDecPFN/PI, tick: "0.99"}
+      - {id: ftpfn-ei, params: {tau: 0.9}, group: FT-PFN/EI, tick: "0.9"}
+      - {id: ftpfn-ei, group: FT-PFN/EI, tick: "0.99"}
+      - {id: ftpfn-pi, params: {tau: 0.9}, group: FT-PFN/PI, tick: "0.9"}
+      - {id: ftpfn-pi, group: FT-PFN/PI, tick: "0.99"}

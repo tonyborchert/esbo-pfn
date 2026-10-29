@@ -50,6 +50,7 @@ TRAINERS: dict[str, TrainFn | str] = {
     "decpfn": "esbopfn.training.train_decpfn:run",
     "decpfn-nostates": "esbopfn.training.train_decpfn:run",
     "decpfn-nodeadtime": "esbopfn.training.train_decpfn:run",
+    "decpfn-nodeadtime-nostates": "esbopfn.training.train_decpfn:run",
     "xdecpfn": "esbopfn.training.train_xdecpfn:run",
     "ftpfn": "esbopfn.training.train_ftpfn:run",
 }

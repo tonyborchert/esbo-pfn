@@ -40,3 +40,18 @@ def test_plan_and_run_with_toy_group(tmp_path):
     assert run_units(shards[0], db, {"toy": kind}) == (len(shards[0]), 0)
     assert run_units(plan({"g": group}, db), db, {"toy": kind}) == (len(shards[1]), len(shards[0]))
     assert len(db.query("toy")) == 5
+
+
+def test_doctor_reports_tabpfn_status(pfn_home, capsys, monkeypatch):
+    from esbopfn.predictors import checkpoints
+
+    monkeypatch.setattr("esbopfn.commands.doctor.find_cpp_binaries", lambda: {})
+    assert main(["doctor"]) == 0
+    line = next(x for x in capsys.readouterr().out.splitlines() if x.startswith("tabpfn"))
+    assert line == f"{'tabpfn':<14}{checkpoints.tabpfn_dir()}: missing"
+    target = checkpoints.tabpfn_dir() / checkpoints.TABPFN_FILENAME
+    target.parent.mkdir(parents=True)
+    target.write_bytes(b"x" * 2_000_000)
+    assert main(["doctor"]) == 0
+    line = next(x for x in capsys.readouterr().out.splitlines() if x.startswith("tabpfn"))
+    assert line == f"{'tabpfn':<14}{target.parent}: {target.name} (2.0 MB)"

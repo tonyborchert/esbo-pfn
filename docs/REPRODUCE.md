@@ -37,15 +37,24 @@ uv run pfn config                # resolved PFN_HOME and profile
 ```
 
 `PFN_HOME` (default `./out`) receives datasets, models, the benchmark database, figures, job
-scripts and logs. Point it at a disk with room for the datasets (the XDecPFN pools alone take
-about 33 GB per problem on Cartpole). The rest of this page writes `pfn` for `uv run pfn`.
+scripts and logs. Point it at a disk with room for the datasets. On Cartpole the 1M
+single-trajectory pool takes about 20 GB (2 GB for its first 100k rows), the XDecPFN pools about
+33 GB and the FT-PFN contexts about 25 GB. The rest of this page writes `pfn` for `uv run pfn`.
 
-On the cluster, put the profile and the two Slurm accounts into your shell profile once:
+On the cluster, put the profile and the two Slurm accounts into your shell profile once. On RWTH
+CLAIX `uv` installs into `~/.local/bin`, the jobs use the `Python/3.12.3` module, and the virtual
+environment (about 6 GB with the CUDA wheels) and the uv cache are best kept outside the 150 GB
+`$HOME` (the profile copies the two `UV_` variables into every job script):
 
 ```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh     # once, into ~/.local/bin
+module load GCCcore/13.3.0 Python/3.12.3            # before uv sync and every pfn call
 export PFN_PROFILE=rwth_claix
+export PFN_HOME=$HPCWORK/esbo-pfn-out
 export PFN_SLURM_ACCOUNT_CPU=<your cpu project>
 export PFN_SLURM_ACCOUNT_GPU=<your gpu project>     # falls back to $PROJECT
+export UV_PROJECT_ENVIRONMENT=$WORK/esbo-pfn-venv   # optional, venv outside the checkout
+export UV_CACHE_DIR=$WORK/uv-cache                  # optional, uv cache outside $HOME
 pfn submit --dry-run -- pfn config                  # inspect the rendered job script
 ```
 

@@ -96,8 +96,19 @@ def _launch_words(profile: Profile, command: tuple[str, ...]) -> str:
     return quoted
 
 
+def env_exports(profile: Profile, environ: dict[str, str] | None = None) -> str:
+    """``export`` lines for the profile's ``env`` variables that are set in the submitting shell.
+    Some clusters (RWTH CLAIX) start jobs without the submitting environment, so the script has to
+    carry these values itself."""
+    env = os.environ if environ is None else environ
+    return "\n".join(
+        f"export {name}={shlex.quote(env[name])}" for name in profile.env if env.get(name, "") != ""
+    )
+
+
 def render(
-    req: JobRequest, profile: Profile, home: Path, workdir: Path, logs_dir: Path
+    req: JobRequest, profile: Profile, home: Path, workdir: Path, logs_dir: Path,
+    environ: dict[str, str] | None = None,
 ) -> str:
     """Return the job script text."""
     res = req.resources
@@ -143,6 +154,7 @@ def render(
         "profile": profile.name,
         "kind": req.kind,
         "modules": module_block,
+        "env": env_exports(profile, environ),
         "pre": pre,
         "home": shlex.quote(str(home)),
         "workdir": shlex.quote(str(workdir)),

@@ -1,7 +1,7 @@
 # RWTH CLAIX-2023 (Slurm). Copy this file to add another cluster and edit accounts, partitions,
 # modules and root.
 name: rwth_claix
-root: ${HPCWORK}/esbo-pfn  # PFN_HOME inside jobs unless PFN_HOME is set at submit time
+root: ${HPCWORK}/esbo-pfn-out  # PFN_HOME of jobs unless PFN_HOME is set, not the checkout
 scheduler: slurm
 # Accounts are never written into the repo: set PFN_SLURM_ACCOUNT_CPU and PFN_SLURM_ACCOUNT_GPU in
 # your shell profile on the cluster (the GPU account falls back to $PROJECT, which CLAIX exports).
@@ -9,6 +9,9 @@ accounts: {cpu: "${PFN_SLURM_ACCOUNT_CPU}", gpu: "${PFN_SLURM_ACCOUNT_GPU:-${PRO
 partitions: {cpu: c23ms, gpu: c23g}
 modules: [GCCcore/13.3.0, Python/3.12.3]
 modules_cpp: [GCC/13.3.0, imkl/2024.2.0]
+# CLAIX starts jobs without the submitting environment. These variables are copied from the
+# submitting shell into the job script when they are set (e.g. a venv and uv cache outside $HOME).
+env: [UV_PROJECT_ENVIRONMENT, UV_CACHE_DIR, UV_PYTHON_DOWNLOADS]
 pre: |
   export PATH="$HOME/.local/bin:$PATH"
   export OMP_NUM_THREADS=1 MKL_NUM_THREADS=1

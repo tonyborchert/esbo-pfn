@@ -31,14 +31,16 @@ pfn bench run prediction_summary --shard 0/8
 ## Catalog
 
 "Local" means the figure renders from the thesis import on a laptop without running any
-benchmark. "Units" are the benchmark kinds the figure reads.
+benchmark. "`--raw`" marks figures that need the cluster copies imported with
+`pfn import thesis-results --raw DIR` ([BENCHMARKS.md](BENCHMARKS.md#importing-the-thesis-results)).
+"Units" are the benchmark kinds the figure reads.
 
 ### Priors (`priors`, `pfn bench run priors`)
 
 | Thesis figure | Name | Units | Local |
 |---|---|---|---|
 | fig:setup:prior-samples | `priors_samples` | `instances`, live rollouts | yes (cheap live rollouts) |
-| fig:app:prior-landscapes | `priors_landscapes` | `instances`, `landscapes` | no (landscape units) |
+| fig:app:prior-landscapes | `priors_landscapes` | `instances`, `landscapes` | yes (thesis landscape cache, `--raw`) |
 
 ### Single-trajectory predictors (`single_trajectory`)
 
@@ -46,8 +48,8 @@ benchmark. "Units" are the benchmark kinds the figure reads.
 |---|---|---|---|
 | fig:sim:lcpfn-decpfn-example | `lcpfn_decpfn_example` | live inference (checkpoints) | with the checkpoints (native or imported thesis weights) |
 | fig:sim:lcpfn-decpfn-heads | `lcpfn_decpfn_heads_benchmark` | `fields`, `prediction`, `prediction_timing` | yes (thesis aggregates) |
-| fig:sim:lcpfn-decpfn-stop-sheet | `lcpfn_decpfn_stop_sheet` | `fields`, `prediction` | no (raw predictions) |
-| fig:app:hpo-gridsearch | `gridsearch_panels` | `$PFN_HOME/hpo` results | after `pfn hpo` |
+| fig:sim:lcpfn-decpfn-stop-sheet | `lcpfn_decpfn_stop_sheet` | `fields`, `prediction` | yes (thesis aggregates and thesis predictions, `--raw`) |
+| fig:app:hpo-gridsearch | `gridsearch_panels` | `$PFN_HOME/hpo` results | yes (thesis HPO tables, `--raw`) or after `pfn hpo` |
 
 ### Off-the-shelf TabPFN (`tabpfn`)
 
@@ -70,18 +72,18 @@ benchmark. "Units" are the benchmark kinds the figure reads.
 |---|---|---|---|
 | fig:sim:fig3-cross | `fig3_cross` | `prediction`, `prediction_timing`, `thesis_series` | yes |
 | fig:app:fig3-sheet | `fig3_sheet` | same | yes |
-| fig:sim:fig2-sheet | `fig2_sheet` | `prediction`, `thesis_series` | yes (without the DecPFN-no-St curve) |
+| fig:sim:fig2-sheet | `fig2_sheet` | `prediction`, `thesis_series` | yes (DecPFN-no-St from the thesis predictions, `--raw`) |
 
 ### Optimization (`optimization`)
 
 | Thesis figure | Name | Units | Local |
 |---|---|---|---|
-| fig:sim:optplay-cross | `optplay_cross` | `instances`, `optimization` | no (per-run records) |
-| fig:app:optplay-cross-sheet | `optplay_cross__sheet` | same | no |
-| fig:sim:optplay-violin-cross-full | `optplay_violin__cross_full` | `optimization`, `thesis_series` | yes at 100 % |
-| fig:app:optplay-violin-sheet | `optplay_violin__sheet` | same | yes at 100 % |
+| fig:sim:optplay-cross | `optplay_cross` | `instances`, `optimization` | yes (thesis runs, `--raw`) |
+| fig:app:optplay-cross-sheet | `optplay_cross__sheet` | same | yes (thesis runs, `--raw`) |
+| fig:sim:optplay-violin-cross-full | `optplay_violin__cross_full` | `optimization`, `thesis_series` | yes at 100 %, at 50 % with the thesis runs (`--raw`) |
+| fig:app:optplay-violin-sheet | `optplay_violin__sheet` | same | yes at 100 %, at 50 % with the thesis runs (`--raw`) |
 | fig:sim:optplay-crashes | `optplay_crashes` | `optimization`, `thesis_series` | yes |
-| fig:sim:optplay-timing | `optplay_timing` | `optimization_timing` | no |
+| fig:sim:optplay-timing | `optplay_timing` | `optimization_timing` | yes (one-thread thesis timing tree, `--raw`) |
 | fig:app:optplay-decpfn-thresholds-violin | `optplay_decpfn_thresholds__violin` | `optimization` | yes at 100 % |
 | fig:app:optplay-qx-variants-violin | `optplay_qx_variants__violin` | `optimization` | yes at 100 % |
 

@@ -114,3 +114,12 @@ def test_expand_env_nested_defaults():
 def test_dry_run_account_line(pfn_home, capsys):
     out = dry_run(capsys, "--profile", "rwth_claix", "--kind", "train", "--", "pfn", "status")
     assert "#SBATCH --account=acct_gpu\n" in out
+
+
+def test_dry_run_copies_profile_env(pfn_home, capsys, monkeypatch):
+    monkeypatch.setenv("UV_PROJECT_ENVIRONMENT", "/work/u/venv dir")
+    monkeypatch.delenv("UV_CACHE_DIR", raising=False)
+    out = dry_run(capsys, "--profile", "rwth_claix", "--kind", "gen", "--", "pfn", "config")
+    assert "export UV_PROJECT_ENVIRONMENT='/work/u/venv dir'\n" in out
+    assert "UV_CACHE_DIR" not in out
+    assert out.index("export UV_PROJECT_ENVIRONMENT") < out.index("uv sync --frozen")

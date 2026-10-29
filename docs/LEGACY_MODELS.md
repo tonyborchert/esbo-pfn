@@ -42,9 +42,13 @@ loads every checkpoint with the old code and writes `<out>/<family>/<problem>/<v
 
 The timing bundle holds 88 such leaves: DecPFN and DecPFN-no-St with the binned, Gaussian and
 linear heads at both sizes on all five problems (60), and LC-PFN with linear input normalization
-(28, Furuta without the Gaussian head). It has no `_zscore` leaf, so every LC-PFN is imported as
-`thesis-<head>-linearnorm`. The `_zscore` leaves import under `thesis-<head>` as soon as an
-export of them is available.
+(28, Furuta without the Gaussian head). It has no `_zscore` leaf. The 28 `_zscore` leaves (the
+thesis LC-PFN, the same problems, heads and sizes) were copied from the cluster checkout
+(`prediction/models/lcpfn/<ds>/transfer/<10|100>/<head>_zscore/0/model.pt`), exported with the
+command above and imported as `lcpfn/<p>/thesis-<head>/<size>`. Since every
+`thesis-<head>-linearnorm` model then has its z-scored counterpart, the 28 `-linearnorm` imports
+were taken out of the model tree (kept in `out/thesis_raw/retired_linearnorm_models/`,
+planning/10_cluster_data_import.md).
 
 `tools/export_thesis_single_trajectory.py parity --models DIR --out tests/fixtures/legacy_single_trajectory`
 writes the parity fixtures of the tests (below).
@@ -68,7 +72,7 @@ epochs (10 or 100) and the old optimizer steps (800 or 8,000). Ids whose variant
 from esbopfn.predictors import get_predictor
 dec = get_predictor("decpfn/cartpole/thesis-binned/1M", "cartpole")
 nos = get_predictor("decpfn-nostates/furuta/thesis-binned/1M", "furuta")
-lc = get_predictor("lcpfn/cartpole/thesis-binned-linearnorm/1M", "cartpole")
+lc = get_predictor("lcpfn/cartpole/thesis-binned/1M", "cartpole")
 lc.predict_curve(trial)
 ```
 

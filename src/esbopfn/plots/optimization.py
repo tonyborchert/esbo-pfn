@@ -20,7 +20,9 @@ Figures (names = thesis asset basenames):
 Data: native ``optimization`` / ``optimization_timing`` units first. A problem without native runs
 falls back to the thesis import (``thesis_series`` ``optplay_finals``, ``optplay_crashes``), which
 holds the final incumbents and the crash curves but no incumbent traces, so the cross curves, the
-50 % violins and the timing split need native units.
+50 % violins and the timing split need run units: native ones or the raw thesis runs imported with
+``pfn import thesis-results --raw`` (``optimization`` / ``optimization_timing`` with
+``provenance: thesis``).
 
 Scaled regret (thesis setup, optimization metrics): ``(J - J_best) / (J_ESRS - J_best)`` per
 instance, ``J_best`` the best final cost of the declared reference strategies, ``J_ESRS`` the final

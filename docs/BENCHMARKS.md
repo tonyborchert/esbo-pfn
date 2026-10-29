@@ -270,9 +270,13 @@ pfn import thesis-results --from /path/to/bachelorarbeit [--raw DIR] [--overwrit
 pfn import thesis-models --from DIR                      # thesis checkpoints
 ```
 
-`import_thesis_results(root)` reads every result file below the `bachelorarbeit` root that exists,
-`--raw` directories are searched for raw optplay trees `<problem>@g0.05@bcapped[@timing]/
-phi_NNNN/runs/<cell>.json`. Units carry `provenance: "thesis"` and the thesis names are mapped:
+`import_thesis_results(root)` reads every result file below the `bachelorarbeit` root that exists.
+`--raw` directories hold copies of cluster-only data and are searched for raw optplay trees
+`<problem>@g0.05@bcapped[@timing]/phi_NNNN/runs/<cell>.json`, the predplay prediction store
+`[predplay/]preds/<problem>/<model>/part-*.parquet`, the old HPO trees
+`[*/]{decpfn,lcpfn}/cartpole/universal/{grid,greedy}/.../trials.csv` and the landscape cache
+`[*/]priors_sheet_cache/priors_sheet.pkl` (`benchmarks/import_cluster.py`). Units carry
+`provenance: "thesis"` and the thesis names are mapped:
 
 | thesis | id |
 |---|---|
@@ -294,9 +298,10 @@ TabPFN `ls`/`diff` encodings, `stengertpfn/modeminimal`, the retired recipe arms
 `furuta_lqr` problem are not imported.
 
 A full import of the thesis project as of 2026-10-29 gives `instances` 5,
-`prediction_ladder` 7, `prediction_timing` 382, task tables 5, `thesis_series` 898. Raw optplay
-runs and raw predplay predictions are cluster-only and are imported by the same command once
-copied (`--raw`).
+`prediction_ladder` 7, `prediction_timing` 382, task tables 5, `thesis_series` 898. The raw
+optplay runs, the raw predplay predictions, the HPO tables and the landscape cache were copied
+from the cluster on 2026-10-29 and are imported with `--raw` (counts in
+planning/10_cluster_data_import.md).
 
 | old file | stored as |
 |---|---|
@@ -309,7 +314,10 @@ copied (`--raw`).
 | `writing/thesis/data/sources/fig1_cross_5prob_canonmed.csv` | `fig3_cross` variant `canonmed` (cluster recomputation, before the retraining) |
 | `optplay/results/<p>@g0.05@bcapped_curves.json` | `optplay_finals` (per-instance final incumbent at 15 min(d,4) trials, at `T_budget`, at the cap), `optplay_reference` (J_best over every old cell), `optplay_log_regret_{trials,time}` (unscaled), `optplay_campaign_timing` |
 | `..._runs.json`, `..._crashes.json` | `optplay_runs` (per-run summaries), `optplay_crashes` (mean crash count on a 200-point time grid) |
-| `<p>@g0.05@bcapped[@timing]/phi_NNNN/runs/<cell>.json` (cluster) | `optimization` / `optimization_timing` with the full `RunRecord` |
+| `<p>@g0.05@bcapped[@timing]/phi_NNNN/runs/<cell>.json` (cluster) | `optimization` / `optimization_timing` with the full `RunRecord` (instance = the `phi_NNNN` directory, the run files record `phi_index: 0`) |
+| `predplay/preds/<p>/<model>/part-*.parquet` (cluster) | `prediction` on the task table `tasks-thesis` (key `checkpoint: thesis`, `tasks_digest` of that table): the `selected` tasks, plus `crash_selected` for crash-aware models, at the five cutoffs and every stop-grid step. No bar edges, no per-call seconds. The raw-J twin `cellf_s20260931` is skipped, `cellnmatched` wins over `celllnjw128`, on Furuta `cellfuruta180sg` over the plain `dynformer_fr2` |
+| `prediction/models/{decpfn,lcpfn}/cartpole/universal/grid/<e>[gauss\|ext]`, `greedy/<e>/<k>_<param>` (cluster) | `$PFN_HOME/hpo/<model>/cartpole/{100k,1M}/trials.csv` (`stage1` = greedy, `stage2` = grid, `val_nll` = the old `val_accuracies[(20, 99)]`, `n_params` recovered from `tflops`, LC-PFN Gaussian cells at the projected training time of the thesis figure, the measured one in `train_time_measured_s`) |
+| `landscape_visualization/out/priors_sheet_cache/priors_sheet.pkl` (cluster) | `landscapes` slice units with `instances_seed: thesis` and the thesis row (`row`), no slice center |
 
 ### Which import serves which figure
 
@@ -322,13 +330,21 @@ alone. The series behind them:
 | fig:sim:fig3-cross, fig:app:fig3-sheet, fig:sim:tabpfn-panel | aggregates (`fig3_cross`, `fig3_per_problem` variant `thesis`) with raw timing records |
 | fig:sim:lcpfn-decpfn-heads | aggregates (`fig3_per_problem` holds every head and size per problem) |
 | fig:sim:ftpfn-xdecpfn-stop-sheet | aggregates (`fig2_stop_curves`) |
-| fig:sim:fig2-sheet | aggregates, except the DecPFN-no-St curve (cluster predictions) |
-| fig:sim:lcpfn-decpfn-stop-sheet | not locally (only DecPFN and LC-PFN 1M binned curves are in `fig2_*.csv`) |
+| fig:sim:fig2-sheet | aggregates, the DecPFN-no-St curve from the raw predictions (`prediction`, provenance thesis) |
+| fig:sim:lcpfn-decpfn-stop-sheet | aggregates for the DecPFN and LC-PFN 1M binned curves (`fig2_*.csv`), the raw predictions for the others |
 | fig:sim:optplay-crashes | aggregates (`optplay_crashes`) |
-| fig:sim:optplay-violin-cross-full, fig:app:optplay-violin-sheet and the two appendix variant violins | aggregates at 100 % only (`optplay_finals`), the 50 % points need the raw runs |
-| fig:sim:optplay-cross, fig:app:optplay-cross-sheet | not locally (needs the per-run incumbent traces, cluster) |
-| fig:sim:optplay-timing | not locally (the one-thread timing tree is cluster-only, `optplay_campaign_timing` holds contended campaign times) |
-| fig:setup:prior-samples, fig:app:prior-landscapes, tab:app:prior-cost | native units (`priors`, `generation_speed`) |
+| fig:sim:optplay-violin-cross-full, fig:app:optplay-violin-sheet and the two appendix variant violins | aggregates at 100 % (`optplay_finals`), the 50 % points from the raw runs (`optimization`) |
+| fig:sim:optplay-cross, fig:app:optplay-cross-sheet | raw runs (`optimization`, the per-run incumbent traces) |
+| fig:sim:optplay-timing | the one-thread timing tree (`optimization_timing`, 3 instances per cell, workers = 1), `optplay_campaign_timing` holds contended campaign times |
+| fig:setup:prior-samples, tab:app:prior-cost | native units (`priors`, `generation_speed`) |
+| fig:app:prior-landscapes | native `landscapes` units, else the imported thesis cache (`landscapes`, `instances_seed: thesis`, drawn in the thesis row order) |
+| fig:app:hpo-gridsearch | `$PFN_HOME/hpo/<model>/cartpole/<size>/trials.csv` (from `pfn hpo`, or the imported thesis tables) |
+
+Plots read the imported thesis predictions (`prediction` units with `provenance: thesis`) only
+where neither native units nor the thesis aggregates have a model. Their stop curves count every
+task of the thesis task table (a query without rows as never stopped), as the thesis did. The
+reduction differs from the thesis in its thresholds (every emitted probability and `>=` instead of
+201 quantiles and `>`), so the steps saved can differ by a few steps from the thesis sidecars.
 
 The imported optplay aggregates were written before the last optimization runs (no ESBO-T-TabPFN
 rows, some cells on 43-50 instances). `optplay_reference` is the old `J_best` over every cell on

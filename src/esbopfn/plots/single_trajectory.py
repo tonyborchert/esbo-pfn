@@ -82,7 +82,8 @@ def heads_table(db: Any, problems: list[str], prov: Provenance) -> tuple[pd.Data
             for head in HEADS:
                 for size in SIZES:
                     mid = resolve_model(arm_id(fam, head, size), p)
-                    units = db.query("prediction", problem=p, model=mid)
+                    units = [u for u in db.query("prediction", problem=p, model=mid)
+                             if not common.is_thesis_unit(u)]
                     value, n, source = float("nan"), 0, ""
                     if units:
                         from esbopfn.benchmarks.kinds.prediction import load_predictions
@@ -195,18 +196,23 @@ def draw_heads(ctx: Context) -> Output:
 
 # ============================================================================ stop sheet
 def native_stop_curves(db: Any, kind: str, models: list[str], problems: list[str],
-                       prov: Provenance, pooled: bool) -> dict[tuple[str, str, int], pd.DataFrame]:
-    """``{(problem, model template, n_ctx): stop curve}`` from native stop-grid rows. ``pooled``
-    gives one curve over every ``n`` (``n_ctx = -1``)."""
+                       prov: Provenance, pooled: bool, thesis_raw: bool = False
+                       ) -> dict[tuple[str, str, int], pd.DataFrame]:
+    """``{(problem, model template, n_ctx): stop curve}`` from native stop-grid rows (the
+    imported thesis predictions with ``thesis_raw``). ``pooled`` gives one curve over every ``n``
+    (``n_ctx = -1``)."""
     out: dict[tuple[str, str, int], pd.DataFrame] = {}
     for tmpl in models:
-        rows = common.prediction_frame(db, kind, [tmpl], problems, prov, native_only=True)
+        rows = common.prediction_frame(db, kind, [tmpl], problems, prov,
+                                       native_only=not thesis_raw, thesis_raw=thesis_raw)
         if rows.empty:
             continue
         for p, g in rows.groupby("problem"):
             groups = [(-1, g)] if pooled else list(g.groupby("n_ctx"))
             for n, gn in groups:
-                curve = metrics.stop_curve(gn)
+                tasks = (common.thesis_tasks(str(p), None if n == -1 else int(n))
+                         if thesis_raw else None)
+                curve = metrics.stop_curve(gn, tasks)
                 if len(curve):
                     out[(str(p), tmpl, int(n))] = curve.sort_values("false_stop_rate",
                                                                     kind="stable")
@@ -232,13 +238,21 @@ def thesis_stop_curves(db: Any, models: list[str], problems: list[str], prov: Pr
 
 def stop_curves(db: Any, kind: str, models: list[str], problems: list[str], prov: Provenance,
                 pooled: bool) -> tuple[dict[tuple[str, str, int], pd.DataFrame], str]:
-    """Native curves where a model has them, the thesis import for the others."""
+    """Native curves where a model has them, the thesis import for the others: the
+    ``fig2_stop_curves`` aggregates, then the imported thesis predictions (every task the old
+    store scored, as the thesis pooled them)."""
     native = native_stop_curves(db, kind, models, problems, prov, pooled)
     have = {(p, m) for p, m, _ in native}
     thesis = {k: v for k, v in thesis_stop_curves(db, models, problems, prov).items()
               if (k[0], k[1]) not in have}
-    src = "+".join(s for s, d in (("native", native), ("thesis import", thesis)) if d)
-    return {**native, **thesis}, src
+    have |= {(p, m) for p, m, _ in thesis}
+    lacking = [m for m in models if any((p, m) not in have for p in problems)]
+    raw = {k: v for k, v in native_stop_curves(db, kind, lacking, problems, prov, pooled,
+                                               thesis_raw=True).items()
+           if (k[0], k[1]) not in have} if lacking else {}
+    src = "+".join(s for s, d in (("native", native), ("thesis import", thesis),
+                                  ("thesis predictions", raw)) if d)
+    return {**native, **thesis, **raw}, src
 
 
 def stop_axes(ax: Any, problem: str) -> None:
@@ -292,8 +306,9 @@ def draw_stop_sheet(ctx: Context) -> Output:
         shown=["Three panels (PT2 dead-time, Cartpole, Furuta), DecPFN, DecPFN-no-St (dashed) "
                "and LC-PFN with the binned head, 100k fainter, 1M full strength.",
                "Series not drawn (no data): " + (", ".join(missing) if missing else "none")
-               + ". The thesis import holds only the DecPFN and LC-PFN 1M curves, the other "
-               "series need native `prediction` units."],
+               + ". The thesis aggregates hold only the DecPFN and LC-PFN 1M curves, the other "
+               "series come from native `prediction` units or the imported thesis predictions "
+               "(every task the old store scored)."],
         metric=["Stop at the first predictable step with crash probability >= tau, tau swept "
                 "over every emitted probability. x: share of non-crashed queries stopped "
                 f"(shown up to {xmax:g}, y fitted to that window), y: mean steps saved on crashed "

@@ -33,6 +33,7 @@ Fields:
 | `accounts`, `partitions` | per resource class `cpu` and `gpu`. Accounts are placeholders such as `${PFN_SLURM_ACCOUNT_CPU}` or `${PFN_SLURM_ACCOUNT_GPU:-${PROJECT}}`, expanded from the environment at submit time, so no account name is ever committed. On RWTH CLAIX put `export PFN_SLURM_ACCOUNT_CPU=<your cpu project>` and `export PFN_SLURM_ACCOUNT_GPU=<your gpu project>` into your shell profile |
 | `modules` | modules loaded by every job (after `module purge`) |
 | `modules_cpp` | extra modules loaded by `--kind gen` jobs (compiler and BLAS runtime) |
+| `env` | names of environment variables copied from the submitting shell into the job script when they are set. RWTH CLAIX starts jobs without the submitting environment, so for example `UV_PROJECT_ENVIRONMENT` and `UV_CACHE_DIR` (a virtual environment and uv cache outside the small `$HOME`) only reach the job this way |
 | `pre`, `pre_gpu` | shell lines run before the command, `pre_gpu` only for jobs with GPUs |
 | `launcher` | prefix for `pfn` commands inside the job, e.g. `uv run --no-sync` |
 | `defaults` | resources per job kind `gen`, `train`, `bench`, `bench_gpu` (`cpus`, `mem`, `time`, `gpus`) |

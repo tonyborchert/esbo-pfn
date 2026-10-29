@@ -599,13 +599,37 @@ def thesis_model_id(model: str) -> str:
     return model
 
 
+def is_thesis_unit(unit: Any) -> bool:
+    """A unit written by the thesis importers (``provenance: thesis``)."""
+    return unit.key.get("provenance") == "thesis"
+
+
+def thesis_tasks(problem: str, n_ctx: int | None = None) -> pd.DataFrame | None:
+    """``task_id, crashed, crash_step, n_ctx`` of the thesis task table (all tasks, or those at
+    ``n_ctx``): the stop-curve denominator of the imported thesis predictions. As in the thesis
+    (``predplay.aggregate.stop_curve``) every task counts, a query without rows (a crash before
+    the first predictable step, or a run an old store did not score) as never stopped."""
+    from esbopfn.benchmarks.tasks import load_tasks
+
+    loaded = load_tasks(problem, "tasks-thesis")
+    if loaded is None:
+        return None
+    t = loaded[0]
+    if n_ctx is not None:
+        t = t[t.n_ctx == n_ctx]
+    return t[["task_id", "crashed", "crash_step", "n_ctx"]].reset_index(drop=True)
+
+
 def prediction_frame(db: Any, kind: str, models: Iterable[str], problems: Iterable[str],
-                     prov: Provenance | None = None, native_only: bool = False) -> pd.DataFrame:
+                     prov: Provenance | None = None, native_only: bool = False,
+                     thesis_raw: bool = False) -> pd.DataFrame:
     """Rows of the finished ``prediction`` / ``prediction_ladder`` units of the given model
     templates (``{p}`` replaced) on ``problems``, with ``problem`` and ``model`` columns. A model
     template is also matched by its thesis ids (:func:`thesis_model_id`, then the imported
     checkpoint ids of :func:`esbopfn.training.registry.thesis_ids`) unless ``native_only``. The
-    ``model`` column holds the template's resolved id either way."""
+    ``model`` column holds the template's resolved id either way. ``native_only`` also leaves out
+    the imported thesis predictions (``provenance: thesis``, every task the old store scored),
+    ``thesis_raw`` reads only those."""
     from esbopfn.benchmarks.kinds.prediction import load_predictions, resolve_model
     from esbopfn.training.registry import thesis_ids
 
@@ -615,9 +639,15 @@ def prediction_frame(db: Any, kind: str, models: Iterable[str], problems: Iterab
         for tmpl in models:
             mid = resolve_model(tmpl, p)
             units = db.query(kind, problem=p, model=mid)
+            if native_only:
+                units = [u for u in units if not is_thesis_unit(u)]
+            if thesis_raw:
+                units = [u for u in units if is_thesis_unit(u)]
             if not units and not native_only:
                 for tid in dict.fromkeys([thesis_model_id(mid), *thesis_ids(mid)]):
                     units = db.query(kind, problem=p, model=tid) if tid != mid else []
+                    if thesis_raw:
+                        units = [u for u in units if is_thesis_unit(u)]
                     if units:
                         break
             if not units:

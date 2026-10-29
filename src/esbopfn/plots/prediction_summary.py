@@ -117,7 +117,8 @@ def _native_scores(db: Any, cfg: dict[str, Any], templates: list[str], prov: C.P
         return None
     prov.add_units("prediction", [
         u for p in probs for t in wanted
-        for u in db.query("prediction", problem=p, model=t.replace("{p}", p))])
+        for u in db.query("prediction", problem=p, model=t.replace("{p}", p))
+        if not C.is_thesis_unit(u)])
     scores = M.collapse_context_blind(M.trial_scores(rows))
     return scores, missing
 
@@ -487,14 +488,17 @@ class StopCurve:
 def fig2_curves(ctx: C.Context, problems: list[str], aware: list[str], ns: list[int],
                 pooled: list[str], prov: C.Provenance, notes: list[str]
                 ) -> tuple[list[StopCurve], str]:
-    """Stop curves per (problem, model, n): native first, else the thesis import."""
+    """Stop curves per (problem, model, n): native first, else the thesis import (the
+    ``fig2_stop_curves`` aggregates, then the imported thesis predictions for the models the
+    aggregates lack)."""
     db = ctx.db
     out: list[StopCurve] = []
-    rows = C.prediction_frame(db, "prediction", aware + pooled, problems, prov=prov,
-                              native_only=True)
-    if not rows.empty:
+
+    def from_rows(rows: pd.DataFrame, templates: list[str], raw: bool = False
+                  ) -> list[StopCurve]:
+        curves = []
         for p in problems:
-            for tmpl in aware + pooled:
+            for tmpl in templates:
                 mid = tmpl.replace("{p}", p)
                 sel = rows[(rows.problem == p) & (rows.model == mid)]
                 if sel.empty:
@@ -505,12 +509,27 @@ def fig2_curves(ctx: C.Context, problems: list[str], aware: list[str], ns: list[
                     if g.empty:
                         continue
                     g = g.assign(task_id=g.task_id.astype(str) + "@" + g.n_ctx.astype(str))
-                    out.append(StopCurve(p, tmpl, int(n), M.stop_curve(g)))
-        return out, "native"
+                    tasks = (C.thesis_tasks(p, None if n == M.COLLAPSED_N else int(n))
+                             if raw else None)
+                    if tasks is not None:
+                        tasks = tasks.assign(task_id=tasks.task_id.astype(str) + "@"
+                                             + tasks.n_ctx.astype(str))
+                    curves.append(StopCurve(p, tmpl, int(n), M.stop_curve(g, tasks)))
+        return curves
+
+    rows = C.prediction_frame(db, "prediction", aware + pooled, problems, prov=prov,
+                              native_only=True)
+    if not rows.empty:
+        return from_rows(rows, aware + pooled), "native"
     series = C.thesis_series(db, "fig2_stop_curves", prov=prov)
     if not series:
-        raise C.MissingData([C.missing_units_message("prediction", aware + pooled, GROUP_NAME),
-                             "or thesis_series fig2_stop_curves (pfn import thesis-results)"])
+        rows = C.prediction_frame(db, "prediction", aware + pooled, problems, prov=prov,
+                                  thesis_raw=True)
+        if rows.empty:
+            raise C.MissingData([C.missing_units_message("prediction", aware + pooled,
+                                                         GROUP_NAME),
+                                 "or thesis_series fig2_stop_curves (pfn import thesis-results)"])
+        return from_rows(rows, aware + pooled, raw=True), "thesis"
     for s in series:
         if s.problem not in problems:
             continue
@@ -523,6 +542,16 @@ def fig2_curves(ctx: C.Context, problems: list[str], aware: list[str], ns: list[
             out.append(StopCurve(s.problem, tmpl, int(n), g.reset_index(drop=True)))
     have = {c.model for c in out}
     lacking = [t for t in aware + pooled if t not in have]
+    if lacking:
+        rows = C.prediction_frame(db, "prediction", lacking, problems, prov=prov,
+                                  thesis_raw=True)
+        raw = from_rows(rows, lacking, raw=True) if not rows.empty else []
+        out += raw
+        if raw:
+            notes.append("from the imported thesis predictions (pooled over the full thesis "
+                         "task set): " + ", ".join(sorted({f"{C.model_label(c.model)} "
+                                                         f"(`{c.model}`)" for c in raw})))
+        lacking = [t for t in lacking if t not in {c.model for c in raw}]
     if lacking:
         notes.append("not in the thesis import, not drawn: "
                      + ", ".join(f"{C.model_label(t)} (`{t}`)" for t in lacking)

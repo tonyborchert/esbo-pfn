@@ -171,4 +171,8 @@ bar masses, FT-PFN Boiler, PT2 dead-time and Furuta to 1e-7).
 
 In the timing bundle the XDecPFN checkpoints of PT2 dead-time, Three-Tank and Boiler are the
 ln-J sweep cells at 22,338, 32,435 and 58,785 steps, not the 16,550-step models of the thesis
-tables. The importer imports them with a note in `config.yaml`.
+tables. The importer imports them with a note in `config.yaml`. The thesis models of these three
+problems (cell `nmatched`, 16,550 steps) were copied from the cluster
+(`$HPCWORK/c1r2/<p>_lnJ_W128_qw05_nmatched/ckpt_final/f_s20260931_seg*_final.pt`) and imported
+with `pfn import thesis-models --from <copy> --overwrite`, the copy laid out as
+`c1r2_qloop/<p>/` and `c1r2_calib/qloop/` (planning/10_cluster_data_import.md).

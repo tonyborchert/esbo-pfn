@@ -212,7 +212,8 @@ def _panel_cost(z: dict[str, np.ndarray]) -> np.ndarray:
 def load_slices(ctx: c.Context, prov: c.Provenance
                 ) -> dict[str, list[tuple[int, dict[str, np.ndarray]]]]:
     """Per problem the stored slices ``[(instance, arrays)]``, sorted by instance (lowest slice
-    seed per instance, native instance list first)."""
+    seed per instance, native instance list first). Without such units the imported thesis
+    panels are used in their thesis row order."""
     sec = ctx.cfg.get("landscapes") if isinstance(ctx.cfg.get("landscapes"), dict) else {}
     wanted = [int(i) for i in sec.get("instances", [0, 1, 2])]
     out: dict[str, list[tuple[int, dict[str, np.ndarray]]]] = {}
@@ -223,15 +224,20 @@ def load_slices(ctx: c.Context, prov: c.Provenance
                                               != _instances_seed(ctx.cfg),
                                               int(u.key["slice_seed"]))):
             i = int(u.key["instance"])
-            if i in wanted and i not in best:
+            if i in wanted and i not in best and "row" not in u.key:
                 best[i] = u
+        if not best:
+            # The imported thesis panels (key ``row``) show other instances in some columns,
+            # so they are taken by their row in the thesis figure.
+            thesis = sorted((u for u in units if "row" in u.key), key=lambda u: int(u.key["row"]))
+            best = dict(enumerate(thesis[:len(wanted)]))
         if not best:
             continue
         prov.add_units("landscapes", best.values())
         rows = []
-        for i in sorted(best):
-            with np.load(Path(best[i].blob_dir) / "landscape.npz") as z:
-                rows.append((i, {k: z[k] for k in z.files}))
+        for r in sorted(best):
+            with np.load(Path(best[r].blob_dir) / "landscape.npz") as z:
+                rows.append((int(best[r].key["instance"]), {k: z[k] for k in z.files}))
         out[p] = rows
     return out
 

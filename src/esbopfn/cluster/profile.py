@@ -85,6 +85,7 @@ class Profile:
     modules_cpp: tuple[str, ...] = ()
     pre: str = ""
     pre_gpu: str = ""
+    env: tuple[str, ...] = ()
     launcher: str = "uv run --no-sync"
     defaults: dict[str, Resources] = field(default_factory=dict)
 
@@ -156,6 +157,7 @@ def load_profile(name: str | None = None, path: Path | str | None = None) -> Pro
         modules_cpp=tuple(raw.get("modules_cpp") or ()),
         pre=str(raw.get("pre") or ""),
         pre_gpu=str(raw.get("pre_gpu") or ""),
+        env=tuple(str(v) for v in (raw.get("env") or ())),
         launcher=str(raw.get("launcher") or ""),
         defaults=defaults,
     )

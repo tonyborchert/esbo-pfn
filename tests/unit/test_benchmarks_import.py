@@ -133,3 +133,100 @@ def test_real_thesis_import(pfn_home):
     info = json.loads((pfn_home / "benchmarks" / "tasks" / "cartpole" / "tasks-thesis.json")
                       .read_text())
     assert info["n_selected"] == 350 and info["thesis_sha"] == "63de6db1acbaedec"
+
+
+# ------------------------------------------------------------------ cluster copies (--raw)
+def _old_trials(path: Path, rows: list[dict]) -> None:
+    path.mkdir(parents=True, exist_ok=True)
+    base = {"status": "completed", "lr": 3.2e-4, "wd": 1e-4, "dropout": 0.0, "epochs": 100,
+            "tflops": 324.145219584, "training_time": 27.0,
+            "val_accuracies[(0, 99)]": 5.4, "val_accuracies[(20, 99)]": 5.7}
+    pd.DataFrame([{**base, "trial": i, **r} for i, r in enumerate(rows)]).to_csv(
+        path / "trials.csv", index=False)
+
+
+def test_hpo_tables(pfn_home, tmp_path):
+    from esbopfn.benchmarks.import_cluster import import_hpo_tables
+
+    models = tmp_path / "models"
+    grid = models / "lcpfn" / "cartpole" / "universal" / "grid"
+    _old_trials(grid / "100", [{"embed_size": 256, "n_layers": 1, "output_type": "binned"},
+                               {"embed_size": 512, "n_layers": 12, "output_type": "linear",
+                                "status": "failed"}])
+    _old_trials(grid / "100gauss", [{"embed_size": 256, "n_layers": 1,
+                                     "output_type": "gaussian", "training_time": 60.0}])
+    _old_trials(grid / "_control_head", [{"embed_size": 256, "n_layers": 1, "output_type": h,
+                                          "training_time": t}
+                                         for h, t in (("binned", 100.0), ("gaussian", 110.0))])
+    _old_trials(models / "lcpfn" / "cartpole" / "universal" / "greedy" / "100" / "1_lr",
+                [{"embed_size": 512, "n_layers": 3, "output_type": "linear"}])
+    assert import_hpo_tables(models) == 1
+    assert import_hpo_tables(models) == 0                      # kept unless overwrite
+    df = pd.read_csv(pfn_home / "hpo" / "lcpfn" / "cartpole" / "1M" / "trials.csv")
+    assert list(df.stage) == ["stage1", "stage2", "stage2", "stage2"]
+    s2 = df[df.stage == "stage2"].set_index("head")
+    assert s2.loc["binned", "val_nll"] == pytest.approx(5.7)
+    assert math.isnan(s2.loc["linear", "val_nll"]) and s2.loc["linear", "stopped_by"] == "failed"
+    assert s2.loc["gaussian", "train_time_s"] == pytest.approx(27.0 * 1.1)   # projected
+    assert s2.loc["gaussian", "train_time_measured_s"] == pytest.approx(60.0)
+    # n_params from tflops = steps * 6 * n_params * batch * length / 1e12 (8000 steps, L = 68)
+    assert s2.loc["binned", "n_params"] == round(324.145219584e12 / (6 * 8000 * 128 * 68))
+
+
+def test_landscape_pickle(pfn_home, tmp_path):
+    import pickle
+
+    import numpy as np
+
+    from esbopfn.benchmarks.import_cluster import import_landscape_pickle
+
+    g = 4
+    img = {"kind": "image", "coords": np.linspace(-1, 1, g), "cost_mean": np.ones((g, g)),
+           "cost_mean_nocrash": np.ones((g, g)), "p_crash": np.zeros((g, g)), "extent": 1.0,
+           "u": [1.0, 0.0], "v": [0.0, 1.0], "instance_index": 5, "source": "optplay_screened"}
+    line = {"kind": "line", "thetas": np.linspace(5, 500, 8), "cost_mean": np.arange(8.0),
+            "p_crash": np.zeros(8), "instance_index": 0}
+    sheet = {"columns": [{"problem": "threetank_pi", "D": 2, "panels": [img]},
+                         {"problem": "boiler", "D": 1, "panels": [line]}], "repeats": 6}
+    path = tmp_path / "priors_sheet.pkl"
+    path.write_bytes(pickle.dumps(sheet))
+    db = Db()
+    assert import_landscape_pickle(db, path) == 2
+    assert import_landscape_pickle(db, path) == 0
+    (u,) = db.query("landscapes", problem="threetank_pi")
+    assert (u.key["instance"], u.key["row"], u.key["instances_seed"]) == (5, 0, "thesis")
+    with np.load(Path(u.blob_dir) / "landscape.npz") as z:
+        assert z["thetas"].shape == (g, g, 2) and float(z["extent"]) == 1.0
+    (b,) = db.query("landscapes", problem="boiler")
+    with np.load(Path(b.blob_dir) / "landscape.npz") as z:
+        assert z["thetas"].shape == (8, 1)
+
+
+def test_predplay_preds(pfn_home, tmp_path):
+    from esbopfn.benchmarks.kinds.prediction import PREDICTION_COLUMNS
+    from esbopfn.benchmarks.tasks import TASK_COLUMNS, save_tasks
+
+    tasks = pd.DataFrame([{
+        "task_id": f"cartpole:i0003_s01:n{n}", "problem": "cartpole", "field": "thesis_oracle65",
+        "run_id": "i0003_s01", "instance": 3, "seed": 1, "run_order": 0, "n_ctx": n,
+        "query_index": n, "T": 1000, "t_obs": 1000, "crash_step": 0, "crashed": False,
+        "target_J": 10.0, "selected": n == 0, "crash_selected": False} for n in (0, 2)])
+    save_tasks(tasks[list(TASK_COLUMNS)], "cartpole", "tasks-thesis", {}, None)
+    t = tasks.iloc[0]
+    d = tmp_path / "preds" / "cartpole" / "decpfn__epochs100__headbinned__states0"
+    d.mkdir(parents=True)
+    mid = "decpfn/epochs100/headbinned/states0"
+    rows = [{"run_id": "run_phi0003_s01", "n_ctx": n, "trial_index": n, "cutoff_frac": f,
+             "cutoff_step": s, "model_id": mid, "ll_conditioned": -1.0, "p_fail": 0.1,
+             "pred_mean": 1.0, "pred_std": 2.0, "J_obs": 0.5}
+            for n, f, s in ((0, 0.1, 99), (0, float("nan"), 15), (2, 0.1, 99))]
+    pd.DataFrame(rows).to_parquet(d / "part-0of1.w0.parquet")
+    (d / "part-0of1.w0.json").write_text(json.dumps({"model_id": mid, "contexts": [0, 2]}))
+    (d / "shard-0of1.done.json").write_text("{}")
+    db = Db()
+    assert I.import_predplay_preds(db, tmp_path / "preds") == 1
+    (u,) = db.query("prediction")
+    assert u.key["model"] == "decpfn-nostates/cartpole/binned/1M"
+    df = pd.read_parquet(Path(u.blob_dir) / "predictions.parquet")
+    assert list(df.columns) == PREDICTION_COLUMNS and len(df) == 3    # every scored task
+    assert df["var"].iloc[0] == pytest.approx(4.0) and df.task_id.iloc[0] == t.task_id

@@ -340,6 +340,118 @@ def import_ladder_parquet(db: Db, path: Path, overwrite: bool = False) -> bool:
     return store(db, "prediction_ladder", key, write, overwrite)
 
 
+#: Old prediction-store ids that are not the thesis weights of the id they map to: the raw-J
+#: XDecPFN twin and the default (non-``furuta180sg``) FT-PFN on Furuta.
+_NOT_THESIS_PREDS = {"dynformer_c1r2/cellf_s20260931", "dynformer_c1r2/cellf_s20260931sg"}
+#: Priority when two old ids of one problem map to the same model id (lower wins).
+_PRED_PRIORITY = {"dynformer_c1r2/cellnmatched": 0, "dynformer_c1r2/celllnjw128": 1,
+                  "dynformer_fr2/cellfuruta180sg": 0, "dynformer_fr2": 1}
+
+
+def _predplay_model_dirs(preds: Path) -> list[tuple[str, str, Path]]:
+    """``(problem, model id, dir)`` of the finished model directories of one predplay store
+    ``preds/<old problem>/<old model>/`` (one per model id, see ``_PRED_PRIORITY``)."""
+    best: dict[tuple[str, str], tuple[int, str, Path]] = {}
+    for d in sorted(preds.glob("*/*")):
+        problem = map_problem(d.parent.name)
+        if problem is None or not d.is_dir() or not any(d.glob("shard-*.done.json")):
+            continue
+        meta = sorted(d.glob("part-*.json"))
+        if not meta:
+            continue
+        old = str(json.loads(meta[0].read_text()).get("model_id", ""))
+        if old in _NOT_THESIS_PREDS:
+            continue
+        if (problem == "furuta" and old == "dynformer_fr2"
+                and (d.parent / "dynformer_fr2__cellfuruta180sg").is_dir()):
+            continue
+        model = map_model(old, problem)
+        if model is None:
+            continue
+        rank = _PRED_PRIORITY.get(old, 0)
+        if (problem, model) not in best or rank < best[(problem, model)][0]:
+            best[(problem, model)] = (rank, old, d)
+    return [(p, m, d) for (p, m), (_, _, d) in sorted(best.items())]
+
+
+def import_predplay_dir(db: Db, path: Path, problem: str, model: str,
+                        home: Path | str | None = None, overwrite: bool = False) -> bool:
+    """One predplay model directory ``preds/<p>/<model>/part-*.parquet`` -> a ``prediction``
+    unit on the thesis task table. Every task the old store scored is kept (the thesis stop
+    curves of the context-blind models pool this full field, not only the ``selected`` tasks of
+    a native unit), crash flags and crash steps come from the task table."""
+    from esbopfn.benchmarks.kinds.prediction import PREDICTION_COLUMNS, crash_aware
+    from esbopfn.benchmarks.tasks import load_tasks
+
+    loaded = load_tasks(problem, "tasks-thesis", home)
+    if loaded is None:
+        raise FileNotFoundError(f"no thesis task table for {problem} (import the thesis "
+                                "results without --raw first)")
+    tasks, tasks_digest = loaded
+    old = pd.concat([pd.read_parquet(f) for f in sorted(path.glob("part-*.parquet"))],
+                    ignore_index=True)
+    if old.empty:
+        return False
+    old_model = str(old.model_id.iloc[0])
+    ids = [parse_run_id(r) for r in old.run_id]
+    run_ids = [f"i{i:04d}_s{s:02d}" for i, s in ids]
+    old["task_id"] = [f"{problem}:{r}:n{n}" for r, n in zip(run_ids, old.n_ctx)]
+    t = tasks.set_index("task_id")
+    unknown = ~old.task_id.isin(t.index)
+    if unknown.any():
+        log.warning("%s: %d rows of tasks outside the thesis task table, skipped", path,
+                    int(unknown.sum()))
+        old = old[~unknown]
+    t = t.loc[old.task_id]
+    if not (old.trial_index.to_numpy() == t.query_index.to_numpy()).all():
+        raise ValueError(f"{path}: query index differs from the thesis task table")
+    T = int(t["T"].iloc[0])
+    frac = old.cutoff_frac.astype(float)
+    df = pd.DataFrame({
+        "task_id": old.task_id.to_numpy(), "run_id": t.run_id.to_numpy(),
+        "instance": t.instance.to_numpy(), "seed": t.seed.to_numpy(),
+        "n_ctx": old.n_ctx.astype(int).to_numpy(), "query_index": t.query_index.to_numpy(),
+        "crashed": t.crashed.to_numpy(), "crash_step": t.crash_step.to_numpy(),
+        "target_J": t.target_J.to_numpy(), "cutoff_frac": frac.to_numpy(),
+        "cutoff_fallback": (frac.notna() & (old.cutoff_step > np.round(frac * T))).to_numpy(),
+        "cutoff_step": old.cutoff_step.astype(int).to_numpy(),
+        "J_obs": old.J_obs.astype(float).to_numpy(),
+        "ll": old.ll_conditioned.astype(float).to_numpy(),
+        "p_crash": old.p_fail.astype(float).to_numpy(), "dist": None, "edges": None,
+        "probs": None, "mean": old.pred_mean.astype(float).to_numpy(),
+        "var": (old.pred_std.astype(float) ** 2).to_numpy(), "seconds": np.nan,
+    })[PREDICTION_COLUMNS]
+    key = {"problem": problem, "model": model, "checkpoint": PROVENANCE,
+           "tasks": "tasks-thesis-all",
+           "tasks_digest": tasks_digest,
+           "n": sorted(int(n) for n in df.n_ctx.unique()), "part": "0/1",
+           "provenance": PROVENANCE, "source_model": old_model}
+    metas = [json.loads(f.read_text()) for f in sorted(path.glob("part-*.json"))]
+
+    def write(d: Path) -> None:
+        df.to_parquet(d / "predictions.parquet", index=False)
+        meta = {"key": key, "model": model, "source": str(path), "thesis_meta": metas,
+                "context_aware": bool(metas and len(metas[0].get("contexts", [])) > 1),
+                "crash_aware": crash_aware(model), "n_rows": len(df),
+                "n_tasks": int(df.task_id.nunique()),
+                "device": metas[0].get("device") if metas else None}
+        (d / "meta.json").write_text(json.dumps(meta, indent=1))
+
+    return store(db, "prediction", key, write, overwrite)
+
+
+def import_predplay_preds(db: Db, preds: Path, home: Path | str | None = None,
+                          overwrite: bool = False) -> int:
+    """Every thesis model directory of a copied predplay store (``predplay/preds``)."""
+    n = 0
+    for problem, model, d in _predplay_model_dirs(preds):
+        try:
+            n += import_predplay_dir(db, d, problem, model, home, overwrite)
+        except FileNotFoundError as exc:
+            log.warning("%s skipped: %s", d, exc)
+    return n
+
+
 # ------------------------------------------------------------------------------ optplay
 def import_instances_json(db: Db, path: Path, overwrite: bool = False) -> bool:
     """optplay ``instances/<p>.json`` -> an ``instances`` unit (``{problem, provenance}``).
@@ -387,9 +499,11 @@ def import_instances_json(db: Db, path: Path, overwrite: bool = False) -> bool:
         overwrite)
 
 
-def convert_run(record: dict[str, Any], problem: str, strategy: str, params: dict[str, Any]
-                ) -> Any:
-    """One old optimizer run record (``OptimizerBenchmark`` checkpoint schema) -> RunRecord."""
+def convert_run(record: dict[str, Any], problem: str, strategy: str, params: dict[str, Any],
+                instance: int | None = None) -> Any:
+    """One old optimizer run record (``OptimizerBenchmark`` checkpoint schema) -> RunRecord.
+    ``instance`` overrides the record's ``phi_index``, which the optplay trees store per
+    ``phi_NNNN`` directory (always 0 there)."""
     from esbopfn.problems.base import cached_spec
     from esbopfn.strategies import RunRecord, TrialRecord
 
@@ -422,7 +536,9 @@ def convert_run(record: dict[str, Any], problem: str, strategy: str, params: dic
         new = map_timing(strategy, cat)
         timing[new] = timing.get(new, 0.0) + float(sec)
     return RunRecord(problem=problem, strategy=strategy, params=params,
-                     seed=int(record.get("seed", 0)), instance_seed=int(record.get("phi_index", 0)),
+                     seed=int(record.get("seed", 0)),
+                     instance_seed=int(record.get("phi_index", 0) if instance is None
+                                       else instance),
                      T=T, n_init=spec.n_init(), n_max=spec.n_max(), t_budget=spec.t_budget(),
                      trials=trials, incumbent_index=inc_index, incumbent_J=inc_J, timing=timing,
                      wall_s=float(record.get("elapsed", 0.0)))
@@ -441,8 +557,10 @@ def import_optplay_runs(db: Db, path: Path, problem: str, instance: int, budget:
         if mapped is None:
             continue
         sid, params, label = mapped
-        rec = convert_run(record, problem, sid, params)
-        key = {"problem": problem, "instance": int(record.get("phi_index", instance)),
+        # The instance is the ``phi_NNNN`` directory: every run file of the thesis trees records
+        # ``phi_index: 0`` (one instance per directory).
+        rec = convert_run(record, problem, sid, params, instance)
+        key = {"problem": problem, "instance": int(instance),
                "strategy": sid, "params": params, "seed": int(record.get("repetition", 0)),
                "budget": budget, "instances_seed": PROVENANCE, "provenance": PROVENANCE,
                "cell": cell, "label": label}
@@ -603,9 +721,16 @@ def import_thesis_results(root: Path | str, db: Db | None = None, *, raw_dirs: l
     opt_results = dyn / "optplay" / "results"
     if opt_results.is_dir():
         add("thesis_series", import_optplay_results(db, opt_results, overwrite))
+    from esbopfn.benchmarks.import_cluster import import_raw_dir
+
     for raw in raw_dirs:
         for tree in sorted(Path(raw).glob("*@g0.05@bcapped*")):
             if tree.is_dir():
                 n = import_optplay_tree(db, tree, overwrite)
                 add("optimization_timing" if tree.name.endswith("@timing") else "optimization", n)
+        for preds in (Path(raw) / "preds", Path(raw) / "predplay" / "preds"):
+            if preds.is_dir():
+                add("prediction", import_predplay_preds(db, preds, home, overwrite))
+        for kind, n in import_raw_dir(db, Path(raw), home, overwrite).items():
+            add(kind, n)
     return counts

@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from esbopfn.benchmarks.db import Db
 
 #: Modules of this package that are helpers, not plot groups.
-NON_GROUP_MODULES = frozenset({"style"})
+NON_GROUP_MODULES = frozenset({"style", "common", "examples"})
 
 
 @dataclass(frozen=True)

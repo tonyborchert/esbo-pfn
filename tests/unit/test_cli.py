@@ -9,8 +9,10 @@ def test_commands_discovered():
     build_parser()
 
 
-def test_empty_registries(pfn_home, capsys):
+def test_empty_registries(pfn_home, capsys, monkeypatch):
     assert isinstance(discover_kinds(), dict) and isinstance(discover_groups(), dict)
+    # without groups: `pfn bench run` with no names would otherwise compute every unit
+    monkeypatch.setattr("esbopfn.benchmarks.runner.discover_groups", lambda: {})
     for argv in (["bench", "plan"], ["bench", "run", "--shard", "0/2"], ["bench", "kinds"],
                  ["plot", "--format", "png", "--theme", "black"], ["status"], ["doctor"]):
         assert main(argv) == 0

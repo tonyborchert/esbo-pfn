@@ -29,7 +29,7 @@ Prerequisites: [uv](https://docs.astral.sh/uv/), CMake 3.16 or newer, a C++17 co
 LAPACK (Accelerate on macOS, OpenBLAS on Linux, MKL on the RWTH cluster).
 
 ```bash
-git clone <this repository> esbo-pfn && cd esbo-pfn
+git clone https://github.com/tonyborchert/esbo-pfn.git esbo-pfn && cd esbo-pfn
 uv sync
 uv run pytest -q                 # unit tests, seconds
 uv run pfn doctor                # Python, torch device, compilers, BLAS, TabPFN checkpoint, binaries

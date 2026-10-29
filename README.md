@@ -237,7 +237,7 @@ size on the rig without weight, and DecPFN (3 ms per prediction) beats Segment-G
 ## Reproduce
 
 ```bash
-git clone <this repository> esbo-pfn && cd esbo-pfn
+git clone https://github.com/tonyborchert/esbo-pfn.git esbo-pfn && cd esbo-pfn
 uv sync                                    # Python 3.12 environment
 uv run pfn doctor                          # torch device, compilers, BLAS, checkpoints, binaries
 uv run pfn data build                      # C++ generators into $PFN_HOME/bin (--blas openblas|mkl)

@@ -33,9 +33,9 @@ dependencies = [
 ]
 
 [project.urls]
-# placeholders, set to the published repository
-Repository = "https://github.com/OWNER/esbo-pfn"
-Documentation = "https://github.com/OWNER/esbo-pfn/tree/main/docs"
+# published repository
+Repository = "https://github.com/tonyborchert/esbo-pfn"
+Documentation = "https://github.com/tonyborchert/esbo-pfn/tree/main/docs"
 
 [project.scripts]
 pfn = "esbopfn.cli:main"

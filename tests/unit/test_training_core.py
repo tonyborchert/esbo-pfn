@@ -9,8 +9,7 @@ import pytest
 import torch
 
 from esbopfn.cli import main
-from esbopfn.training import TRAINERS, TrainRequest, get_trainer
-from esbopfn.training import common, registry
+from esbopfn.training import TRAINERS, TrainRequest, common, get_trainer, registry
 
 
 def test_lr_schedule_warmup_then_cosine():
@@ -176,8 +175,8 @@ def test_trainers_dict_and_train_command(pfn_home, caplog):
     assert callable(get_trainer("decpfn"))
     with pytest.raises(KeyError):
         get_trainer("nope")
-    from esbopfn.commands.train import requests
     from esbopfn.cli import build_parser
+    from esbopfn.commands.train import requests
 
     args = build_parser().parse_args(["train", "all", "--problem", "all"])
     reqs = requests(args)
@@ -191,3 +190,14 @@ def test_trainers_dict_and_train_command(pfn_home, caplog):
     # missing data is reported with the generation hint, not a traceback
     assert main(["train", "decpfn", "--problem", "boiler", "--size", "100k"]) == 1
     assert "pfn data gen --for train decpfn --problem boiler" in caplog.text
+
+
+def test_train_rows_override(pfn_home):
+    from esbopfn.cli import build_parser
+    from esbopfn.commands.train import requests
+
+    args = build_parser().parse_args(["train", "decpfn", "--problem", "boiler", "--rows", "500"])
+    assert [r.rows for r in requests(args)] == [500]
+    args = build_parser().parse_args(["train", "xdecpfn", "--problem", "boiler", "--rows", "500"])
+    with pytest.raises(SystemExit):
+        requests(args)

@@ -84,11 +84,9 @@ def info(problem: str, home: Path | str | None = None) -> dict[str, Any]:
 
 
 def detect_blas() -> str:
-    """Accelerate on macOS, MKL when ``MKLROOT`` is set, OpenBLAS otherwise."""
+    """Accelerate on macOS, OpenBLAS otherwise (MKL is chosen explicitly with ``--blas mkl``)."""
     if platform.system() == "Darwin":
         return "accelerate"
-    if os.environ.get("MKLROOT"):
-        return "mkl"
     return "openblas"
 
 

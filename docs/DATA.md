@@ -44,7 +44,7 @@ Normally the binaries are driven by `pfn data`:
 pfn data build [--blas accelerate|openblas|mkl] [--native]
 pfn data status [--problem P]
 pfn data gen <dataset_id> | --for train <model> --problem P | --for all [--problem P]
-             [--workers N] [--seed S] [--shard i/n] [--no-resume]
+             [--workers N] [--seed S] [--shard i/n] [--no-resume] [--count N]
 pfn data verify <dataset_id> [--sample N] [--no-parity] [--n-ks 500]
 pfn data speed --problem P [--count 2000] [--sets 10] [--budget 120]
 ```
@@ -53,7 +53,9 @@ pfn data speed --problem P [--count 2000] [--sets 10] [--budget 120]
 `meta.json` and passed to every later run) and calls the binary for the chunks that are not done.
 With `--shard i/n` it takes every n-th chunk starting at chunk i, so a Slurm array of n tasks
 (`pfn submit --array 0-<n-1> -- pfn data gen ...`) writes the dataset in parallel into one
-directory.
+directory. `--count N` generates only the chunks that hold the first `N` units, a partial dataset
+for smoke runs (`pfn data gen traj/boiler/1M --count 4096` writes the first chunk of 10,000 rows).
+A later run without `--count` completes it, since every chunk has its own seed.
 
 ## Building
 

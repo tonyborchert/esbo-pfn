@@ -5,7 +5,13 @@
 ```
 uv sync
 uv run pytest -q
+uvx ruff check src tests tools
 ```
+
+`pyproject.toml` holds the ruff standard: line length 100, target Python 3.12, rule sets `E F I UP
+B`. Format new or rewritten code with `uvx ruff format <file>` or `--range`. The existing modules
+are hand-wrapped, so a tree-wide `ruff format` is not applied, and `E501` tolerates existing lines
+up to 120 columns.
 
 Unit tests run in seconds on a laptop. Tests marked `cpp`, `gpu`, `slurm` or `hardware` run when
 the resource is found or when `--run-<marker>` is passed.
@@ -16,8 +22,9 @@ the resource is found or when `--run-<marker>` is passed.
 - Type hints everywhere, dataclasses for configs and records, `logging` instead of `print` (the
   command modules print their results to stdout).
 - No module-level side effects, no configuration read at import time, no `sys.path` edits.
-  Configuration reaches code through explicit arguments. The only environment variables are
-  `PFN_HOME` and `PFN_PROFILE`.
+  Configuration reaches code through explicit arguments. The only environment variables read are
+  `PFN_HOME` and `PFN_PROFILE`, plus `PFN_SLURM_ACCOUNT_CPU`/`PFN_SLURM_ACCOUNT_GPU` and the
+  `${HPCWORK}`/`${PROJECT}` placeholders of a cluster profile (see [CLUSTER.md](CLUSTER.md)).
 - Every random draw takes an explicit `numpy.random.Generator` or torch generator derived with
   `esbopfn.util.seeds.substream(root_seed, *labels)`. No global RNG.
 - Small modules. Each own predictor has `model.py`, `train.py` and `predictor.py`, plus `data.py`

@@ -28,7 +28,7 @@ def register(subparsers: argparse._SubParsersAction) -> None:
 
     b = sub.add_parser("build", help="build and install the C++ generators into $PFN_HOME/bin")
     b.add_argument("--blas", choices=BLAS_CHOICES, default=None,
-                   help="LAPACK provider (default: accelerate on macOS, mkl if MKLROOT, else openblas)")
+                   help="LAPACK provider (default: accelerate on macOS, else openblas)")
     b.add_argument("--native", action="store_true", help="compile with -march=native")
     b.add_argument("--jobs", type=int, default=None, help="parallel compile jobs")
     b.set_defaults(func=run_build)
@@ -48,6 +48,9 @@ def register(subparsers: argparse._SubParsersAction) -> None:
     g.add_argument("--seed", type=int, default=None, help="override the catalog seed")
     g.add_argument("--shard", default=None, help="i/n: generate every n-th chunk starting at i")
     g.add_argument("--no-resume", action="store_true", help="delete existing data first")
+    g.add_argument("--count", type=int, default=None,
+                   help="generate only the chunks holding the first COUNT units (quick partial "
+                        "dataset, a later run without --count completes it)")
     g.set_defaults(func=run_gen)
 
     v = sub.add_parser("verify", help="check invariants and C++/Python parity")
@@ -92,7 +95,7 @@ def run_status(args: argparse.Namespace) -> int:
             print(json.dumps(st.to_dict()))
             continue
         if st.placeholder:
-            state = "finished" if st.finished else "placeholder (benchmark phase)"
+            state = "finished" if st.finished else "written by the fields benchmark"
             print(f"{did:38s} {state}")
             continue
         state = "finished" if st.finished else f"{st.chunks_done}/{st.chunks_total} chunks"
@@ -128,7 +131,8 @@ def run_gen(args: argparse.Namespace) -> int:
     workers = args.workers or default_workers()
     shard = parse_shard(args.shard)
     for did in _targets(args):
-        st = generate(did, workers=workers, seed=args.seed, resume=not args.no_resume, shard=shard)
+        st = generate(did, workers=workers, seed=args.seed, resume=not args.no_resume, shard=shard,
+                      count=args.count)
         state = "finished" if st.finished else f"{st.chunks_done}/{st.chunks_total} chunks"
         print(f"{did}: {state} ({st.path})")
     return 0

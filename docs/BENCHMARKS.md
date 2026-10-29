@@ -232,11 +232,18 @@ fig:sim:landscape-furuta) and fig:app:hpo-gridsearch need trained models or HPO 
 pfn bench plan prediction_summary            # missing units per kind
 pfn bench run priors                         # everything, in dependency order
 pfn bench run prediction_summary --kind fields --shard 3/40
+pfn bench run optimization --problem boiler --set instances.count=3 \
+    --set "optimization.strategies=[esrs]" --set optimization.instances=1 --set optimization.n_max=5
 ```
 
 `pfn bench run` re-plans after each pass, so units whose inputs appear during the run (prediction
 units after the field is complete) are computed in the same call. `--kind` restricts a plan to one
-dependency stage. Large prediction units can be split with `parts: k` on a model entry.
+dependency stage. `--problem P` (repeatable) restricts the spec to some problems and
+`--set section.key=value` (repeatable, YAML value) overrides one value of the spec, which makes
+small local runs possible (the last example above runs one five-trial ESRS unit on Boiler). The
+optimization sections take `n_max` and `t_budget` to cap a run below the thesis budget, and those
+caps become part of the unit key. Large prediction units can be split with `parts: k` on a model
+entry.
 
 ### On Slurm
 

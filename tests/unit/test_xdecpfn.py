@@ -32,6 +32,7 @@ from esbopfn.predictors.xdecpfn.model import (
     equal_mass_edges,
 )
 from esbopfn.problems.registry import get_spec
+from esbopfn.training.common import seeded_torch
 
 TINY = {"d_model": 32, "n_heads": 2, "layers_causal": 1, "layers_cross": 1, "d_ff": 64,
         "n_bin": 40, "n_sys": 2, "n_reuse": 16, "log_every": 5, "eval_every": 10,
@@ -50,9 +51,9 @@ def synthetic_traj(spec, rng, crash_step=None) -> Trajectory:
 
 
 def tiny_model(spec, d_in, n_bins=40) -> XDecPFN:
-    torch.manual_seed(0)
-    return XDecPFN(XDecPFNConfig(d_in=d_in, d_theta=spec.d, d_model=16, n_heads=2, layers_causal=1,
-                                 layers_cross=2, d_ff=32, n_bins=n_bins))
+    with seeded_torch(0):
+        return XDecPFN(XDecPFNConfig(d_in=d_in, d_theta=spec.d, d_model=16, n_heads=2,
+                                     layers_causal=1, layers_cross=2, d_ff=32, n_bins=n_bins))
 
 
 def tiny_calib(spec, n_bins=40) -> XCalib:
@@ -95,9 +96,10 @@ def test_token_counts_follow_the_decoder_grid(predictor):
 def test_stage1_is_causal():
     spec = get_spec("cartpole")
     m = tiny_model(spec, 7).eval()
-    x = torch.randn(2, 10, 7)
+    g = torch.Generator().manual_seed(0)
+    x = torch.randn(2, 10, 7, generator=g)
     y = x.clone()
-    y[:, 6:] = torch.randn(2, 4, 7)
+    y[:, 6:] = torch.randn(2, 4, 7, generator=g)
     with torch.no_grad():
         assert torch.allclose(m.stage1(x)[:, :6], m.stage1(y)[:, :6], atol=1e-6)
 
@@ -116,12 +118,13 @@ def test_cross_mask_never_reads_queries():
 def test_queries_do_not_change_other_outputs():
     spec = get_spec("cartpole")
     m = tiny_model(spec, 7).eval()
-    rep, th = torch.randn(1, 4, 16), torch.randn(1, 4, 4)
+    g = torch.Generator().manual_seed(0)
+    rep, th = torch.randn(1, 4, 16, generator=g), torch.randn(1, 4, 4, generator=g)
     mk = torch.tensor([[MARK_COMPLETE, MARK_CUT, MARK_CRASH, MARK_CUT]])
     valid = torch.ones(1, 4, dtype=torch.bool)
-    q1 = torch.randn(1, 3, 4)
+    q1 = torch.randn(1, 3, 4, generator=g)
     q2 = q1.clone()
-    q2[:, 1:] = torch.randn(1, 2, 4)
+    q2[:, 1:] = torch.randn(1, 2, 4, generator=g)
     with torch.no_grad():
         t1, l1 = m.stage2(rep, th, mk, valid, q1)
         t2, l2 = m.stage2(rep, th, mk, valid, q2)

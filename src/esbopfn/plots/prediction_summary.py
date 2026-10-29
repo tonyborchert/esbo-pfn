@@ -75,10 +75,14 @@ def problems_of(cfg: dict[str, Any]) -> list[str]:
 
 
 def template_of(model: str, problem: str | None = None) -> str:
-    """Problem-agnostic id with the cross-trajectory thesis ids mapped to the spec's ids."""
+    """Problem-agnostic id with the imported thesis ids mapped to the spec's ids."""
     tmpl = M.series_label(model, problem) if problem else model
     if C.model_family(tmpl) in ("xdecpfn", "ftpfn"):
         tmpl = tmpl.replace("/thesis/default", "/default/default")
+    parts = tmpl.split("/")
+    if len(parts) >= 4 and parts[2].startswith("thesis-"):      # imported DecPFN / LC-PFN ids
+        parts[2] = parts[2][len("thesis-"):].removesuffix("-linearnorm")
+        tmpl = "/".join(parts)
     return tmpl
 
 

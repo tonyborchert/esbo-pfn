@@ -20,7 +20,8 @@ def register(subparsers: argparse._SubParsersAction) -> None:
     m.add_argument("--from", dest="dirs", required=True, action="append", type=Path,
                    help="directory with the checkpoints, repeatable")
     m.add_argument("--problem", action="append", default=None)
-    m.add_argument("--overwrite", action="store_true")
+    m.add_argument("--overwrite", action="store_true",
+                   help="replace models imported before (default: skip them)")
     m.set_defaults(func=run_models)
     # Other importers add their subcommands through ``register_import(sub)`` in their module.
     import importlib
@@ -48,5 +49,8 @@ def run_models(args: argparse.Namespace) -> int:
 
     first, *rest = args.dirs
     for m in import_thesis(first, *rest, problems=args.problem, overwrite=args.overwrite):
-        print(f"{m.model_id:<40} step {m.step:>7}  {m.note}")
+        if m.skipped:
+            print(f"{m.model_id:<40} skipped, already imported (--overwrite replaces it)")
+        else:
+            print(f"{m.model_id:<40} step {m.step:>7}  {m.note}")
     return 0

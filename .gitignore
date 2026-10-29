@@ -5,6 +5,7 @@ out/
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.ruff_cache/
 .DS_Store
 .idea/
 # model and data artifacts
@@ -15,3 +16,5 @@ __pycache__/
 build/
 cpp/build*/
 cmake-build-*/
+# build planning notes (kept outside the repository)
+planning/

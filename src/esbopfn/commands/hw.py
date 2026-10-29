@@ -169,7 +169,7 @@ def _pause(args: argparse.Namespace) -> int:
 
 def _bench_pred(args: argparse.Namespace) -> int:
     from esbopfn.benchmarks.db import Db
-    from esbopfn.benchmarks.kinds.hardware_prediction import NAME, run, unit_key
+    from esbopfn.benchmarks.kinds.hardware_prediction import NAME, resolve_models, run, unit_key
 
     cfg = _bench_config()
     pred = cfg.get("prediction") or {}
@@ -180,6 +180,7 @@ def _bench_pred(args: argparse.Namespace) -> int:
         models = dict(m.split("=", 1) if "=" in m else (m.split("/")[0], m) for m in args.models)
     else:
         models = pred.get("ablation" if args.ablation else "predictors") or {}
+    models = resolve_models(models)
     db = Db()
     for name, model in models.items():
         key = unit_key(args.rig, bench, name, model,

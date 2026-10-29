@@ -1,4 +1,3 @@
-import os
 import subprocess
 import sys
 
@@ -9,9 +8,13 @@ from esbopfn.cluster.profile import available_profiles, load_profile
 from esbopfn.cluster.submit import parse_array
 
 
+@pytest.fixture(autouse=True)
+def _accounts(monkeypatch):
+    monkeypatch.setenv("PFN_SLURM_ACCOUNT_CPU", "acct_cpu")
+    monkeypatch.setenv("PFN_SLURM_ACCOUNT_GPU", "acct_gpu")
+
+
 def dry_run(capsys, *args):
-    os.environ["PFN_SLURM_ACCOUNT_CPU"] = "acct_cpu"
-    os.environ["PFN_SLURM_ACCOUNT_GPU"] = "acct_gpu"
     code = main(["submit", "--dry-run", *args])
     assert code == 0
     return capsys.readouterr().out
@@ -94,3 +97,20 @@ def test_parse_array_errors():
     for bad in ("3", "5-2", "a-b"):
         with pytest.raises(ValueError):
             parse_array(bad)
+
+
+def test_expand_env_nested_defaults():
+    from esbopfn.cluster.profile import expand_env
+
+    env = {"A": "a", "P": "p", "EMPTY": ""}
+    assert expand_env("${A:-${P}}", env) == "a"
+    assert expand_env("${X:-${P}}", env) == "p"
+    assert expand_env("${EMPTY:-${X:-d}}/x", env) == "d/x"
+    assert expand_env("pre-${A}-${P}", env) == "pre-a-p"
+    assert expand_env("${X:-${Y}}", env) is None
+    assert expand_env("${A", env) is None
+
+
+def test_dry_run_account_line(pfn_home, capsys):
+    out = dry_run(capsys, "--profile", "rwth_claix", "--kind", "train", "--", "pfn", "status")
+    assert "#SBATCH --account=acct_gpu\n" in out

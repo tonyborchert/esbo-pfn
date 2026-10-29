@@ -16,8 +16,15 @@ from esbopfn.training import common, registry
 from esbopfn.training.heads import Head, make_head
 from esbopfn.training.normalization import Calib
 from esbopfn.training.single_trajectory_data import (
-    SIZES, VAL_RANGES, DecPFNBatch, DecPFNData, PoolReader, calibrate_decpfn, cutoff_range,
-    training_pools)
+    SIZES,
+    VAL_RANGES,
+    DecPFNBatch,
+    DecPFNData,
+    PoolReader,
+    calibrate_decpfn,
+    cutoff_range,
+    training_pools,
+)
 
 log = logging.getLogger(__name__)
 
@@ -73,10 +80,11 @@ def train(problem: str, head: str, size: str, hparams_row: dict[str, Any], seed:
           time_limit: float | None = None, device: str = "auto", *, variant: str = "decpfn",
           train_pool: PoolReader | None = None, val_pool: PoolReader | None = None,
           home: Path | None = None, workers: int = 0, eval_every: int | None = None,
-          stat_rows: int | None = None) -> Path:
+          stat_rows: int | None = None, rows: int | None = None) -> Path:
     """Train one DecPFN and write its model directory. Returns the directory.
 
-    ``train_pool`` / ``val_pool`` replace the catalog datasets (tests). Without ``out_dir`` the
+    ``train_pool`` / ``val_pool`` replace the catalog datasets (tests), ``rows`` limits the
+    catalog training pool to its first rows (smoke runs). Without ``out_dir`` the
     model goes to ``registry.model_dir(<variant>/<problem>/<head>/<size>/<run>)``. A finished
     directory is left as it is, an unfinished one resumes.
     """
@@ -89,7 +97,7 @@ def train(problem: str, head: str, size: str, hparams_row: dict[str, Any], seed:
         log.info("%s is already trained", out_dir)
         return out_dir
     if train_pool is None or val_pool is None:
-        pools = training_pools(variant, problem, size, home)
+        pools = training_pools(variant, problem, size, home, rows=rows)
         train_pool, val_pool, n_examples = pools.train, pools.val, pools.n_examples
         datasets = {"train": pools.train_id, "val": pools.val_id}
     else:

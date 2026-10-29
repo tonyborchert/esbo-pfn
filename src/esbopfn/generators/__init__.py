@@ -50,7 +50,7 @@ __all__ = ["DatasetStatus", "chunk_seed", "generate", "open_dataset", "parse_sha
 
 
 class NotGeneratable(RuntimeError):
-    """Raised for placeholder datasets that a later phase writes (``fields/...``)."""
+    """Raised for placeholder datasets that the benchmark units write (``fields/...``)."""
 
 
 def chunk_seed(seed: int, chunk: int) -> int:
@@ -215,17 +215,20 @@ def _write_meta(owner: DatasetDef, directory: Path, seed: int, extra: dict[str, 
 
 def generate(dataset_id: str, workers: int = 1, seed: int | None = None, resume: bool = True,
              shard: tuple[int, int] | None = None, home: Path | str | None = None,
-             catalog: DatasetCatalog | None = None) -> DatasetStatus:
+             catalog: DatasetCatalog | None = None, count: int | None = None) -> DatasetStatus:
     """Generate (or continue) ``dataset_id`` with the C++ binary.
 
     A prefix dataset generates the first chunks of its parent. ``shard=(i, n)`` restricts the run
     to every n-th chunk, so n independent jobs together produce the whole dataset. With
-    ``resume=False`` an existing directory is removed first.
+    ``resume=False`` an existing directory is removed first. ``count`` generates only the chunks
+    holding the first ``count`` units (a quick partial dataset, completed by a later run without
+    it, since the chunks do not depend on each other).
     """
     cat = catalog or load_catalog()
     d = cat.resolve(dataset_id)
     if d.placeholder:
-        raise NotGeneratable(f"{d.id} is written by the benchmark phase, not by pfn data gen")
+        raise NotGeneratable(f"{d.id} is written by the `fields` benchmark units "
+                             "(pfn bench run --kind fields), not by pfn data gen")
     owner = cat.storage(dataset_id)
     directory = dataset_dir(owner, home, cat)
     if not resume and directory.exists():
@@ -234,7 +237,7 @@ def generate(dataset_id: str, workers: int = 1, seed: int | None = None, resume:
         log.info("removing %s", directory)
         shutil.rmtree(directory)
     seed = owner.seed if seed is None else int(seed)
-    needed = n_chunks(d.count, owner.chunk)
+    needed = n_chunks(d.count if count is None else max(1, min(int(count), d.count)), owner.chunk)
     chunks = [k for k in chunks_of_shard(n_chunks(owner.count, owner.chunk), shard) if k < needed]
     before = status(dataset_id, home, cat)
     if not chunks:

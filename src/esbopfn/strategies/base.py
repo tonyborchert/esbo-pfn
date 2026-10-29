@@ -133,7 +133,7 @@ class Strategy(ABC):
         self.armed = bool(armed)
         self.J_minus = incumbent(history)[1]
 
-    def on_trial_end(self, trial: Trial, index: int) -> None:
+    def on_trial_end(self, trial: Trial, index: int) -> None:  # noqa: B027 -- optional hook
         """Called once trial ``index`` ended. ``trial.traj`` is the full uncut trajectory, which
         only the oracle strategy reads past ``trial.t_obs``."""
 

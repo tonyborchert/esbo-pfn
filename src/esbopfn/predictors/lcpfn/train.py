@@ -16,8 +16,15 @@ from esbopfn.training import common, registry
 from esbopfn.training.heads import Head, make_head, n_outputs
 from esbopfn.training.normalization import Calib
 from esbopfn.training.single_trajectory_data import (
-    SIZES, VAL_RANGES, LCPFNBatch, LCPFNData, PoolReader, calibrate_lcpfn, cutoff_range,
-    training_pools)
+    SIZES,
+    VAL_RANGES,
+    LCPFNBatch,
+    LCPFNData,
+    PoolReader,
+    calibrate_lcpfn,
+    cutoff_range,
+    training_pools,
+)
 
 log = logging.getLogger(__name__)
 
@@ -73,7 +80,7 @@ def train(problem: str, head: str, size: str, hparams_row: dict[str, Any], seed:
           time_limit: float | None = None, device: str = "auto", *, variant: str = "lcpfn",
           train_pool: PoolReader | None = None, val_pool: PoolReader | None = None,
           home: Path | None = None, workers: int = 0, eval_every: int | None = None,
-          stat_rows: int | None = None) -> Path:
+          stat_rows: int | None = None, rows: int | None = None) -> Path:
     """Train one LC-PFN and write its model directory. Same contract as
     :func:`esbopfn.predictors.decpfn.train.train`."""
     if variant not in VARIANTS:
@@ -85,7 +92,7 @@ def train(problem: str, head: str, size: str, hparams_row: dict[str, Any], seed:
         log.info("%s is already trained", out_dir)
         return out_dir
     if train_pool is None or val_pool is None:
-        pools = training_pools(variant, problem, size, home)
+        pools = training_pools(variant, problem, size, home, rows=rows)
         train_pool, val_pool, n_examples = pools.train, pools.val, pools.n_examples
         datasets = {"train": pools.train_id, "val": pools.val_id}
     else:

@@ -154,7 +154,7 @@ starts from the same initial design (`substream(seed, "init")`, `N_init = 8` uni
 
 The budgets, initial design, incumbent and `exceed` rule are those of `strategies.loop`. The rig
 loop cannot reuse `run_optimization` directly, because that loop simulates a trial in full and
-replays the stop rules afterwards, so `runner.py` re-implements the loop around an online trial
+replays the stop rules afterward, so `runner.py` re-implements the loop around an online trial
 and imports the shared pieces (`incumbent_index`, `sample_uniform`, `strategy_rng`, the seed
 streams). The next controller is proposed before the reset starts and the two never overlap.
 

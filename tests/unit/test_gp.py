@@ -119,7 +119,7 @@ def test_warm_fit_runs_fifteen_percent_of_the_steps(monkeypatch):
 
 # ----------------------------------------------------------------------------- MES
 def test_mes_prefers_unexplored_low_region():
-    # cost falls towards x = 0.5, everything right of it is unexplored
+    # cost falls toward x = 0.5, everything right of it is unexplored
     X = np.linspace(0, 0.5, 11)[:, None]
     y = 2 + 0.3 * np.sin(8 * X[:, 0]) + 2 * (0.5 - X[:, 0])
     gp = ExactGP(np.zeros(1), np.ones(1)).fit(X, y)

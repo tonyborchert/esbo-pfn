@@ -14,6 +14,7 @@ from esbopfn.predictors.lcpfn.model import LCPFN, LCPFNConfig, pfn_mask
 from esbopfn.predictors.lcpfn.train import train
 from esbopfn.problems.registry import get_spec
 from esbopfn.training import registry
+from esbopfn.training.common import seeded_torch
 from esbopfn.training.single_trajectory_data import PoolReader, simulate_pool
 
 ROW = dict(d_model=32, n_layers=2, lr=2e-3, weight_decay=0.0, dropout=0.0, batch_size=32,
@@ -32,18 +33,19 @@ def test_mask_and_forward():
     mask = pfn_mask(2, 4)
     assert mask.tolist() == [[False, False, True, True], [False, False, True, True],
                              [False, False, False, True], [False, False, True, False]]
-    torch.manual_seed(0)
-    m = LCPFN(LCPFNConfig(n_outputs=7, d_model=32, n_layers=2)).eval()
+    with seeded_torch(0):
+        m = LCPFN(LCPFNConfig(n_outputs=7, d_model=32, n_layers=2)).eval()
+    g = torch.Generator().manual_seed(0)
     blk = m.blocks[0]
     assert not blk.norm_first and torch.count_nonzero(blk.linear2.weight) == 0
     assert torch.count_nonzero(blk.self_attn.out_proj.weight) == 0
     assert isinstance(m.decoder[1], torch.nn.GELU) and m.decoder[0].out_features == 64
-    t, y = torch.randn(3, 10), torch.randn(3, 4)
+    t, y = torch.randn(3, 10, generator=g), torch.randn(3, 4, generator=g)
     out = m(t, y)
     assert out.shape == (3, 6, 7)
     # queries do not see each other: dropping later queries leaves earlier outputs unchanged
     for p in m.parameters():   # break the zero init so attention matters
-        p.data.add_(0.05 * torch.randn_like(p))
+        p.data.add_(0.05 * torch.randn(p.shape, generator=g))
     full = m(t, y)
     assert torch.allclose(m(t[:, :6], y)[:, :2], full[:, :2], atol=1e-5)
 

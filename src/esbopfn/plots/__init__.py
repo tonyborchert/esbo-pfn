@@ -1,4 +1,5 @@
-"""Plot groups. Each module here (other than ``style``) exposes ``GROUP = PlotGroup(...)``.
+"""Plot groups. Each module here exposes ``GROUP = PlotGroup(...)``, except the helper modules
+``style``, ``common``, ``examples`` and those whose name starts with an underscore.
 
 A group's config is read from ``configs/benchmarks/<group>.yaml`` (empty if the file is absent).
 """

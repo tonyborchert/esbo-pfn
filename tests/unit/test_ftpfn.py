@@ -33,6 +33,7 @@ from esbopfn.predictors.ftpfn.model import (
 )
 from esbopfn.predictors.ftpfn.train import make_loss
 from esbopfn.problems.registry import get_spec
+from esbopfn.training.common import seeded_torch
 
 TINY = {"d_model": 32, "n_heads": 2, "n_layers": 2, "d_ff": 64, "n_bin": 40, "batch_size": 4,
         "log_every": 5, "eval_every": 10, "checkpoint_every": 100, "data": {"calib_examples": 16}}
@@ -55,9 +56,9 @@ def toy_calib(spec, n_bins=10) -> FCalib:
 
 
 def tiny_model(d_theta, n_bins=10) -> FTPFN:
-    torch.manual_seed(0)
-    return FTPFN(FTPFNConfig(d_theta=d_theta, d_model=16, n_layers=2, n_heads=2, d_ff=32,
-                             n_bins=n_bins)).eval()
+    with seeded_torch(0):
+        return FTPFN(FTPFNConfig(d_theta=d_theta, d_model=16, n_layers=2, n_heads=2, d_ff=32,
+                                 n_bins=n_bins)).eval()
 
 
 # --------------------------------------------------------------------------- tokens

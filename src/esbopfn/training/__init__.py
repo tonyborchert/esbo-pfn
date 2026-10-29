@@ -25,7 +25,8 @@ class TrainRequest:
 
     ``head`` and ``size`` are None for models without these axes (XDecPFN, FT-PFN). ``hparams``
     is an optional YAML file overriding ``configs/hparams/<model>.yaml``. ``steps`` overrides the
-    number of optimizer steps, ``time_limit`` caps the training time in seconds.
+    number of optimizer steps, ``time_limit`` caps the training time in seconds. ``rows`` limits
+    the LC-PFN/DecPFN training pool to its first rows (smoke runs on a partial pool).
     """
 
     model: str
@@ -39,6 +40,7 @@ class TrainRequest:
     time_limit: float | None = None
     device: str = "auto"
     home: Path | None = None
+    rows: int | None = None
 
 
 TrainFn = Callable[[TrainRequest], Path]

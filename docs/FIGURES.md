@@ -44,7 +44,7 @@ benchmark. "Units" are the benchmark kinds the figure reads.
 
 | Thesis figure | Name | Units | Local |
 |---|---|---|---|
-| fig:sim:lcpfn-decpfn-example | `lcpfn_decpfn_example` | live inference (checkpoints) | with the checkpoints |
+| fig:sim:lcpfn-decpfn-example | `lcpfn_decpfn_example` | live inference (checkpoints) | with the checkpoints (native or imported thesis weights) |
 | fig:sim:lcpfn-decpfn-heads | `lcpfn_decpfn_heads_benchmark` | `fields`, `prediction`, `prediction_timing` | yes (thesis aggregates) |
 | fig:sim:lcpfn-decpfn-stop-sheet | `lcpfn_decpfn_stop_sheet` | `fields`, `prediction` | no (raw predictions) |
 | fig:app:hpo-gridsearch | `gridsearch_panels` | `$PFN_HOME/hpo` results | after `pfn hpo` |
@@ -160,13 +160,18 @@ The README embeds PNG renders of the figure groups that draw from the thesis imp
 sidecar, and the method schematics of the thesis converted to PNG:
 
 ```bash
-pfn plot prediction_summary optimization hardware --format png --out assets/figures
-pfn plot cross_trajectory --format png      # then copy the PNGs and sidecars, not _cache/
-pdftoppm -png -r 150 -singlefile <thesis>/assets/xdecpfn_training.pdf assets/figures/schematics/xdecpfn_training
+pfn plot prediction_summary optimization hardware cross_trajectory --format png --out assets/figures
+pfn plot single_trajectory --format png --out /tmp/st   # then copy lcpfn_decpfn_example.png and .md
+for s in xdecpfn_training decpfn_training lcpfn_training; do
+  pdftoppm -png -r 200 -singlefile <thesis>/assets/$s.pdf assets/figures/schematics/$s
+done
 ```
 
-`cross_trajectory` caches its live inference under `<out>/cross_trajectory/_cache/`, which is why it
-renders into `$PFN_HOME/figures` first. The sidecars hold `$PFN_HOME` in place of local paths. Only
+The live-inference figures cache their simulated runs and model predictions under
+`$PFN_HOME/figures/_cache/<group>/`, never in the output directory, so `--out` receives only
+figures, sidecars and `skipped.txt`. The live figures take the native model first and fall back
+to the imported thesis weights (`pfn import thesis-models`, see
+[LEGACY_MODELS.md](LEGACY_MODELS.md)). The sidecars hold `$PFN_HOME` in place of local paths. Only
 figures that render from data in the database are kept there. The groups list the figures
 they skip and why in `skipped.txt` next to the rendered ones (for example the optimization curves,
 which need per-run records).

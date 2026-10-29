@@ -65,7 +65,7 @@ def fakes(pfn_home, monkeypatch):
     run = fake_run()
     monkeypatch.setattr(ex, "_build", build)
     monkeypatch.setattr(ex, "_checkpoint", lambda m: "fake")
-    monkeypatch.setattr(ex, "example_trial", lambda db, out_dir, problem="cartpole":
+    monkeypatch.setattr(ex, "example_trial", lambda db, cache, problem="cartpole":
                         ex.ExampleTrial(run, 11, "test", "i0008_s00", "thesis", ["synthetic"]))
     g = 6
     coords = np.linspace(-1, 1, g)
@@ -92,7 +92,7 @@ def test_examples_render(fakes, tmp_path, fmt, theme):
     for s in SPECS:
         assert (out / f"{s.name}.{fmt}").stat().st_size > 0
         md = (out / f"{s.name}.md").read_text()
-        assert "Thesis asset" in md and "_cache/examples/" in md
+        assert "Thesis asset" in md and "$PFN_HOME/figures/_cache/t/" in md
 
 
 def _texts(fig):

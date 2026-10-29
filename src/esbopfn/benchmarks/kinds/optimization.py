@@ -6,10 +6,10 @@ trials and ``T_budget = 15 * T * min(d, 4)`` steps, whichever binds first (budge
 initial design on an instance.
 
 Key ``{problem, instance, strategy, params, seed, budget, instances_seed}`` (optional
-``n_max``, ``t_budget`` override the caps, used only for small test runs). ``params`` are the
-registry defaults of the strategy merged with the group's overrides, plus ``checkpoint`` (sha256,
-16 hex digits) when the strategy uses a ``model``. Imported thesis runs carry ``provenance:
-"thesis"`` and ``cell`` (the old cell name).
+``n_max``, ``t_budget`` override the caps, set from the same keys of the spec section, used
+only for small test runs). ``params`` are the registry defaults of the strategy merged with the
+group's overrides, plus ``checkpoint`` (sha256, 16 hex digits) when the strategy uses a
+``model``. Imported thesis runs carry ``provenance: "thesis"`` and ``cell`` (the old cell name).
 Blob ``run.json``: :meth:`RunRecord.to_json` (``problem, strategy, params, seed, instance_seed, T,
 n_init, n_max, t_budget, trials[{theta, t_obs, J_obs, crashed, success, complete, J_true, source,
 propose_s, stop_rule_s, end_s, J}], incumbent_index[], incumbent_J[], timing{gp_acq, segment_gp,
@@ -64,6 +64,7 @@ def optimization_keys(cfg: dict[str, Any], kind: str, budget: str, default_insta
     from esbopfn.benchmarks.groups import instances_seed, problems, section
 
     sec = section(cfg, kind)
+    caps = {k: int(sec[k]) for k in ("n_max", "t_budget") if sec.get(k) is not None}
     keys: list[Key] = []
     for p in problems(cfg, sec):
         for entry in sec.get("strategies", []):
@@ -75,7 +76,7 @@ def optimization_keys(cfg: dict[str, Any], kind: str, budget: str, default_insta
                 for s in sec.get("seeds", [0]):
                     keys.append({"problem": p, "instance": int(i), "strategy": entry["id"],
                                  "params": params, "seed": int(s), "budget": budget,
-                                 "instances_seed": instances_seed(cfg)})
+                                 "instances_seed": instances_seed(cfg), **caps})
     return keys
 
 

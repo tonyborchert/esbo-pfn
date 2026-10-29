@@ -185,6 +185,24 @@ def test_adapter_parity(path: Path) -> None:
 
 
 @needs_export
+def test_import_thesis_skips_existing(tmp_path: Path) -> None:
+    """A second import skips the models already imported, ``overwrite`` replaces them."""
+    from esbopfn.benchmarks.import_models import import_thesis
+
+    export = tmp_path / "export"
+    leaf = export / "decpfn" / "boiler" / "thesis-binned" / "1M"
+    leaf.parent.mkdir(parents=True)
+    leaf.symlink_to(EXPORT / "decpfn" / "boiler" / "thesis-binned" / "1M")
+    home = tmp_path / "home"
+    first = import_thesis(export, home=home)
+    assert [m.skipped for m in first] == [False]
+    second = import_thesis(export, home=home)
+    assert [(m.model_id, m.skipped) for m in second] == [("decpfn/boiler/thesis-binned/1M", True)]
+    third = import_thesis(export, home=home, overwrite=True)
+    assert [m.skipped for m in third] == [False]
+
+
+@needs_export
 def test_import_and_registry(tmp_path: Path) -> None:
     from esbopfn.benchmarks.import_models import import_single_trajectory_leaf
     from esbopfn.predictors.lcpfn.legacy import LegacyLCPFNPredictor

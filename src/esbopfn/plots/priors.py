@@ -275,7 +275,7 @@ def _draw_line(ax: Any, z: dict[str, np.ndarray]) -> str:
             f"J in [{fin.min():.4g}, {fin.max():.4g}]" if fin.size else "no successful theta")
 
 
-def _colour_key(ax: Any) -> None:
+def _color_key(ax: Any) -> None:
     n = 48
     q = np.linspace(0.0, 1.0, n)
     cost = np.tile(q[:, None], (1, n))           # rank rises with the row
@@ -326,7 +326,7 @@ def draw_landscapes(ctx: c.Context) -> c.Output:
         fig.text((_L_LEFT - 0.06) / W, y, label, rotation=90, ha="right", va="center",
                  fontsize=6.0)
     side = min(_L_KEY, n_rows * cell)
-    _colour_key(fig.add_axes(((_L_LEFT + 5 * cell + _L_KEY_GAP + _L_KEY_LABEL) / W,
+    _color_key(fig.add_axes(((_L_LEFT + 5 * cell + _L_KEY_GAP + _L_KEY_LABEL) / W,
                               (_L_BOTTOM + (n_rows * cell - side) / 2) / H, side / W, side / H)))
     missing = [p for p in (ctx.cfg.get("problems") or c.PROBLEMS) if p not in cols]
     sidecar = c.Sidecar(

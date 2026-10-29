@@ -8,7 +8,7 @@ the per-problem normalization ``med_D`` and ``reference_strategies`` the strateg
 defines ``J_best``, so a figure's normalization never depends on what else is in the database.
 
 ``load(name)`` reads a spec, ``units(cfg)`` expands it into ``(kind, key)`` pairs, and
-``pfn bench plan|run <group>`` runs them. Plot modules of later phases read the same specs.
+``pfn bench plan|run <group>`` runs them. The plot modules read the same specs.
 """
 
 from __future__ import annotations
@@ -90,13 +90,14 @@ def participants(cfg: dict[str, Any], problem: str, figure: str | None = None) -
 
 
 def spec_group(name: str):
-    """A :class:`PlotGroup` whose needs come from the spec (rendering is a later phase)."""
+    """A :class:`PlotGroup` for a spec without a plot module: its needs come from the spec,
+    rendering raises :class:`NotImplementedError`."""
     from esbopfn.plots import PlotGroup
 
     def needs(cfg: dict[str, Any], db: Any) -> list[tuple[str, dict[str, Any]]]:
         return units(cfg or load(name))
 
     def render(*_: Any) -> None:
-        raise NotImplementedError(f"plot group {name!r} has no renderer yet")
+        raise NotImplementedError(f"plot group {name!r} has no plot module")
 
     return PlotGroup(name=name, needs=needs, render=render)

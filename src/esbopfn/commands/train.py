@@ -32,6 +32,9 @@ def register(subparsers: argparse._SubParsersAction) -> None:
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--run", default="0", help="run label, the last model id component")
     p.add_argument("--steps", type=int, default=None, help="override the number of steps")
+    p.add_argument("--rows", type=int, default=None,
+                   help="LC-PFN/DecPFN: train on the first ROWS pool rows only (smoke runs on a "
+                        "partial pool, use with --run)")
     p.add_argument("--time-limit", type=float, default=None, help="cap the training time [s]")
     p.add_argument("--device", default="auto", help="auto (cuda > mps > cpu), cuda, mps, cpu")
     p.set_defaults(func=run)
@@ -51,6 +54,8 @@ def requests(args: argparse.Namespace) -> list:
                 if args.model != "all" and args.problem != "all":
                     raise SystemExit(f"{m} exists for {', '.join(allowed)} only")
                 continue
+            if args.rows is not None and m not in AXES_MODELS:
+                raise SystemExit(f"--rows applies to the LC-PFN and DecPFN models, not to {m}")
             if m in AXES_MODELS:
                 heads = HEADS if args.head == "all" else [args.head or "binned"]
                 sizes = SIZES if args.size == "all" else [args.size or "1M"]
@@ -61,7 +66,7 @@ def requests(args: argparse.Namespace) -> list:
                     out.append(TrainRequest(model=m, problem=prob, head=h, size=s,
                                             hparams=args.hparams, seed=args.seed, run=args.run,
                                             steps=args.steps, time_limit=args.time_limit,
-                                            device=args.device))
+                                            device=args.device, rows=args.rows))
     return out
 
 

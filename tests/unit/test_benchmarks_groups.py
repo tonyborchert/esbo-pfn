@@ -87,3 +87,24 @@ def _trials():
              "t_obs": 701, "crash_step": 0, "J_T": float(i + t)}
             for i in range(50) for t in range(65)]
     return pd.DataFrame(rows, columns=T.TRIAL_COLUMNS)
+
+
+def test_plan_overrides(pfn_home):
+    from esbopfn.benchmarks.runner import parse_set, with_overrides
+
+    sets = parse_set(["instances.count=3", "optimization.strategies=[esrs]",
+                      "optimization.instances=1", "optimization.n_max=5"])
+    assert sets["optimization.strategies"] == ["esrs"] and sets["instances.count"] == 3
+    with pytest.raises(ValueError):
+        parse_set(["no-equals-sign"])
+    cfg = with_overrides(groups.load("optimization"), ["boiler"], sets)
+    assert cfg["problems"] == ["boiler"] and cfg["instances"]["count"] == 3
+    units = plan(select_groups(["optimization"]), Db(), kinds=["instances", "optimization"],
+                 problems=["boiler"], sets=sets)
+    kinds = Counter(u.kind for u in units)
+    assert kinds == {"instances": 1, "optimization": 1}
+    opt = next(u for u in units if u.kind == "optimization")
+    assert opt.key["strategy"] == "esrs" and opt.key["n_max"] == 5 and opt.key["problem"] == "boiler"
+    # without overrides the optimization keys carry no caps
+    plain = plan(select_groups(["optimization"]), Db(), kinds=["optimization"])
+    assert all("n_max" not in u.key for u in plain)

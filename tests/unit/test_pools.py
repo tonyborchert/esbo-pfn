@@ -164,7 +164,7 @@ def test_shards_and_chunk_lists():
 
 
 def test_chunk_seed_contract():
-    # chunk k of a dataset with seed S uses derive_seed(S, k); values pinned from numpy's
+    # chunk k of a dataset with seed S uses derive_seed(S, k), values pinned from numpy's
     # SeedSequence (the binaries reproduce them, see tests/cpp)
     assert chunk_seed(0, 0) == derive_seed(0, 0) == 8668861027912758289
     assert chunk_seed(12345, 7) == 4008720786225166622

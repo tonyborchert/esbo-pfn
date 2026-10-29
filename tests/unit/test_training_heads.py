@@ -11,7 +11,13 @@ import torch
 from esbopfn.predictors.base import BarPrediction, GaussianPrediction
 from esbopfn.training.heads import BarHead, GaussianHead, make_head
 from esbopfn.training.normalization import (
-    Calib, bar_edges, channel_stats, make_calib, strictly_increasing, time_stats)
+    Calib,
+    bar_edges,
+    channel_stats,
+    make_calib,
+    strictly_increasing,
+    time_stats,
+)
 
 
 def test_bar_head_nll_matches_thesis_formula():

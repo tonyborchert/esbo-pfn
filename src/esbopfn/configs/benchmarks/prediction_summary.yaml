@@ -1,7 +1,7 @@
 # fig:sim:fig3-cross and fig:app:fig3-sheet (pooled and per-problem ll_norm against median
 # inference time, context-blind models as points, context-aware ones as Pareto fronts over n) and
 # fig:sim:fig2-sheet (steps saved at a false-stop share of at most 0.1: XDecPFN and FT-PFN at
-# n = 0 and 64, DecPFN, DecPFN-noStates and LC-PFN pooled over n).
+# n = 0 and 64, DecPFN, DecPFN-no-St and LC-PFN pooled over n).
 description: Representative predictors of every group
 kinds: [instances, fields, prediction, prediction_timing]
 problems: [boiler, threetank_pi, pt2_deadtime, cartpole, furuta]

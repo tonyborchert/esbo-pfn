@@ -4,7 +4,6 @@ C++ binaries)."""
 from __future__ import annotations
 
 import argparse
-import os
 import platform
 import shutil
 import subprocess
@@ -45,7 +44,9 @@ def blas_hints() -> list[str]:
         import numpy as np
 
         blas = np.__config__.CONFIG["Build Dependencies"]["blas"]
-        hints.append(f"numpy BLAS: {blas.get('name')} {blas.get('version', '')}".rstrip())
+        version = str(blas.get("version") or "")
+        version = "" if version.lower() == "unknown" else f" {version}"
+        hints.append(f"numpy BLAS: {blas.get('name')}{version}")
     except (AttributeError, KeyError, TypeError):
         hints.append("numpy BLAS: unknown")
     if Path("/System/Library/Frameworks/Accelerate.framework").exists():
@@ -53,8 +54,6 @@ def blas_hints() -> list[str]:
     if shutil.which("pkg-config"):
         if subprocess.run(["pkg-config", "--exists", "openblas"], check=False).returncode == 0:
             hints.append("OpenBLAS via pkg-config: present (cmake -DBLAS=openblas)")
-    if os.environ.get("MKLROOT"):
-        hints.append(f"MKLROOT={os.environ['MKLROOT']} (cmake -DBLAS=mkl)")
     return hints
 
 

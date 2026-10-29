@@ -10,9 +10,9 @@ The example trial
     ``n = 64`` tasks. The native task table ``tasks-oracle65`` and its field units are used when
     they exist. Otherwise the imported thesis table ``tasks-thesis`` names the run (thesis:
     ``i0008_s00``, query 64) and that Oracle run is simulated on the imported thesis instance
-    with the seed of the ``fields`` kind, cached under ``<out_dir>/_cache/examples/``. Without
-    any table, run ``i0008_s00`` of the available instance list is used. If the query trial of a
-    simulated run crashes, the last non-crashed trial at or before it is the query.
+    with the seed of the ``fields`` kind, cached under ``$PFN_HOME/figures/_cache/<group>/``.
+    Without any table, run ``i0008_s00`` of the available instance list is used. If the query
+    trial of a simulated run crashes, the last non-crashed trial at or before it is the query.
 
 The Furuta landscape
     One plant (the first of instances 0-9 whose true slice has a crash share between 0.25 and
@@ -22,7 +22,8 @@ The Furuta landscape
     trials are the contexts, and the models' predictions for the unrun slice controllers
     (``predict_unrun``). The true slice is read from the database when present, else computed
     with the kind's own function, and every live result is cached as npz under
-    ``<out_dir>/_cache/examples/``, keyed by plant, slice, model checkpoint hash and context.
+    ``$PFN_HOME/figures/_cache/<group>/``, keyed by plant, slice, model checkpoint hash and
+    context.
 """
 
 from __future__ import annotations
@@ -68,9 +69,9 @@ BLUE_RGB = np.array([0.20, 0.55, 0.98])
 RED_RGB = np.array([0.98, 0.20, 0.20])
 
 DENSITY_COLOR = style.RWTH_BLUE
-#: Sidecar line on the live-result cache (``<out_dir>/_cache/examples/``).
+#: Sidecar line on the live-result cache (``$PFN_HOME/figures/_cache/<group>/``).
 CACHE_NOTE = ("Live results (simulated runs, true slice, model predictions) are cached as npz "
-              "under `_cache/examples/` next to this figure, keyed by plant, slice, model "
+              "under `$PFN_HOME/figures/_cache/{group}/`, keyed by plant, slice, model "
               "checkpoint hash and context. Delete that directory to recompute them.")
 
 
@@ -120,8 +121,16 @@ def load_models(candidate_lists: list[list[str]], problem: str) -> list[tuple[st
     return out
 
 
+def candidates(model_id: str) -> list[str]:
+    """The native id, then its imported thesis ids
+    (:func:`esbopfn.training.registry.model_candidates`)."""
+    from esbopfn.training.registry import model_candidates
+
+    return model_candidates(model_id)
+
+
 def cross_candidates(family: str, problem: str) -> list[str]:
-    return [f"{family}/{problem}/default/default", f"{family}/{problem}/thesis/default"]
+    return candidates(f"{family}/{problem}/default/default")
 
 
 # ============================================================================ the example trial
@@ -155,8 +164,8 @@ def _instances_seed(db: Any, problem: str) -> Any:
     if db.query("instances", problem=problem, provenance="thesis"):
         return "thesis"
     raise c.MissingData(f"instances of {problem}",
-                        f"run `pfn bench run priors --kind instances` or `pfn import "
-                        f"thesis-results`")
+                        "run `pfn bench run priors --kind instances` or `pfn import "
+                        "thesis-results`")
 
 
 def median_task(tasks: Any, n_ctx: int = EXAMPLE_N_CTX) -> Any:
@@ -168,10 +177,17 @@ def median_task(tasks: Any, n_ctx: int = EXAMPLE_N_CTX) -> Any:
     return sel.iloc[(len(sel) - 1) // 2]
 
 
-def _cache_dir(out_dir: Path) -> Path:
-    d = Path(out_dir) / "_cache" / "examples"
+def _cache_dir(ctx: c.Context) -> Path:
+    """``$PFN_HOME/figures/_cache/<group>/`` of the database's output root."""
+    from esbopfn.config import paths
+
+    d = paths(c.db_home(ctx.db)).figures / "_cache" / (ctx.group or "examples")
     d.mkdir(parents=True, exist_ok=True)
     return d
+
+
+def _cache_note(ctx: c.Context) -> str:
+    return CACHE_NOTE.format(group=ctx.group or "examples")
 
 
 class _Recorder:
@@ -224,7 +240,7 @@ def _simulated_oracle_run(problem: str, instance: int, seed: int, instances_seed
     return _cached_field(cache / name, build)
 
 
-def example_trial(db: Any, out_dir: Path, problem: str = EXAMPLE_PROBLEM) -> ExampleTrial:
+def example_trial(db: Any, cache: Path, problem: str = EXAMPLE_PROBLEM) -> ExampleTrial:
     """The example query (see the module docstring for the rule)."""
     from esbopfn.benchmarks.instances import BENCH_SEED
     from esbopfn.benchmarks.kinds.fields import field_index, read_field
@@ -254,11 +270,11 @@ def example_trial(db: Any, out_dir: Path, problem: str = EXAMPLE_PROBLEM) -> Exa
             notes.append(f"query named by the imported thesis task table `tasks-thesis`: run "
                          f"{task.run_id}, trial index {query}, thesis J_T = "
                          f"{float(task.target_J):.2f}")
-    run = _simulated_oracle_run(problem, instance, seed, seed_used, _cache_dir(out_dir),
-                                max(query + 1, 65))
+    run = _simulated_oracle_run(problem, instance, seed, seed_used, cache, max(query + 1, 65))
     notes.append(f"Oracle run simulated live on instance {instance} of the "
                  f"{'thesis-imported' if seed_used == 'thesis' else 'native'} instance list "
-                 f"(seed {seed} of the `fields` kind), cached under `_cache/examples/`")
+                 f"(seed {seed} of the `fields` kind), cached under `$PFN_HOME/figures/_cache/"
+                 f"{cache.name}/`")
     q = min(query, run.n_trials - 1)
     while q > 0 and int(run.crash_step[q]) > 0:
         q -= 1
@@ -392,10 +408,10 @@ def _crash_text(p: float) -> str:
 def draw_lcpfn_decpfn_example(ctx: c.Context) -> c.Output:
     from esbopfn.problems.base import cached_spec
 
-    (lc_id, lc), (dec_id, dec) = load_models([[f"lcpfn/{EXAMPLE_PROBLEM}/binned/1M"],
-                                              [f"decpfn/{EXAMPLE_PROBLEM}/binned/1M"]],
+    (lc_id, lc), (dec_id, dec) = load_models([candidates(f"lcpfn/{EXAMPLE_PROBLEM}/binned/1M"),
+                                              candidates(f"decpfn/{EXAMPLE_PROBLEM}/binned/1M")],
                                              EXAMPLE_PROBLEM)
-    ex = example_trial(ctx.db, ctx.out_dir)
+    ex = example_trial(ctx.db, _cache_dir(ctx))
     spec = cached_spec(EXAMPLE_PROBLEM)
     traj = ex.trajectory
     J = np.asarray(traj.J, dtype=float)
@@ -427,7 +443,7 @@ def draw_lcpfn_decpfn_example(ctx: c.Context) -> c.Output:
                 f"{y_max:.1f} (1.6 J_T or the trajectory maximum)."],
         numbers=results,
         data=[f"Run {ex.run_label}, query trial {ex.query}, T = {ex.T}, true J_T = "
-              f"{float(J[-1]):.2f}."] + ex.notes + [CACHE_NOTE])
+              f"{float(J[-1]):.2f}."] + ex.notes + [_cache_note(ctx)])
     return c.Output(sc, fig=fig)
 
 
@@ -450,7 +466,7 @@ def draw_ftpfn_xdecpfn_example(ctx: c.Context) -> c.Output:
     (ft_id, ft), (xd_id, xd) = load_models([cross_candidates("ftpfn", EXAMPLE_PROBLEM),
                                             cross_candidates("xdecpfn", EXAMPLE_PROBLEM)],
                                            EXAMPLE_PROBLEM)
-    ex = example_trial(ctx.db, ctx.out_dir)
+    ex = example_trial(ctx.db, _cache_dir(ctx))
     spec = cached_spec(EXAMPLE_PROBLEM)
     traj = ex.trajectory
     J = np.asarray(traj.J, dtype=float)
@@ -485,7 +501,7 @@ def draw_ftpfn_xdecpfn_example(ctx: c.Context) -> c.Output:
         metric=[f"No ticks. x = step t, y = J_t, shared y limit {y_max:.1f}."],
         numbers=results,
         data=[f"Run {ex.run_label}, query trial {ex.query}, T = {ex.T}, true J_T = "
-              f"{float(J[-1]):.2f}."] + ex.notes + [CACHE_NOTE])
+              f"{float(J[-1]):.2f}."] + ex.notes + [_cache_note(ctx)])
     return c.Output(sc, fig=fig)
 
 
@@ -523,7 +539,7 @@ def true_slice(db: Any, instance: int, instances_seed: Any, cache: Path,
         if not path.exists():
             d.mkdir(parents=True, exist_ok=True)
             landscapes.run_slice(key, d)
-        prov.add_file(path.relative_to(cache.parent.parent))
+        prov.add_file(path)
     with np.load(path) as z:
         return {k: z[k] for k in z.files}
 
@@ -632,7 +648,7 @@ def draw_landscape_furuta(ctx: c.Context) -> c.Output:
                                             cross_candidates("ftpfn", LANDSCAPE_PROBLEM)],
                                            LANDSCAPE_PROBLEM)
     seed_used = _instances_seed(ctx.db, LANDSCAPE_PROBLEM)
-    cache = _cache_dir(ctx.out_dir)
+    cache = _cache_dir(ctx)
     instance, real, why = pick_plant(ctx.db, ctx.cfg, seed_used, cache, prov)
     thetas = np.asarray(real["thetas"], dtype=float)
     n_max = max(LANDSCAPE_CONTEXTS)
@@ -656,7 +672,7 @@ def draw_landscape_furuta(ctx: c.Context) -> c.Output:
         return ((left + col * cell) / W, (bottom + (1 - r) * cell) / H, cell / W, cell / H)
 
     numbers: list[str] = []
-    for r, (label, mid, sid, run, panels) in enumerate(rows):
+    for r, (label, _mid, _sid, _run, panels) in enumerate(rows):
         for col, (n, pan) in enumerate(zip(LANDSCAPE_CONTEXTS, panels)):
             ax = fig.add_axes(rect(r, col))
             _image(ax, landscape_colors(pan["cost_mean"], pan["p_crash"]), ctx.theme)
@@ -685,7 +701,7 @@ def draw_landscape_furuta(ctx: c.Context) -> c.Output:
         data.append(f"{label} context: prefixes of one `{sid}` run (seed {LANDSCAPE_LOOP_SEED}, "
                     f"{run.n_trials} trials, {int((run.crash_step > 0).sum())} crashed) on the "
                     f"same plant with `{mid}` (checkpoint {_checkpoint(mid)}), cached under "
-                    "`_cache/examples/`.")
+                    f"`$PFN_HOME/figures/_cache/{cache.name}/`.")
     sc = c.Sidecar(
         thesis_asset="simulation/prediction/ftpfn_xdecpfn/landscape_furuta_BEST_NO_DELETE.pdf",
         label="fig:sim:landscape-furuta",
@@ -700,7 +716,7 @@ def draw_landscape_furuta(ctx: c.Context) -> c.Output:
                 "six repeats. Model panels: the predictive mean of J_T without crash (value "
                 "part of the bar distribution) and the predicted crash probability for the "
                 "unrun controller (`predict_unrun`)."],
-        numbers=numbers, data=data + [CACHE_NOTE], provenance=prov)
+        numbers=numbers, data=data + [_cache_note(ctx)], provenance=prov)
     return c.Output(sc, fig=fig)
 
 

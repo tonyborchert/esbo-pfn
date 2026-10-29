@@ -102,7 +102,7 @@ def lr_factor(step: int, total: int, warmup_frac: float = 0.25) -> float:
 @contextlib.contextmanager
 def seeded_torch(seed: int, *labels: int | str, device: torch.device | None = None):
     """Run a block with the torch RNG seeded from ``(seed, *labels)`` and restore the previous
-    CPU (and CUDA) RNG state afterwards."""
+    CPU (and CUDA) RNG state afterward."""
     cuda = device is not None and device.type == "cuda"
     devices = [device.index or 0] if cuda else []
     with torch.random.fork_rng(devices=devices):
@@ -206,7 +206,7 @@ def fit(
     steps, when ``time_limit_s`` of training time is used up, or when the iterator is exhausted.
     ``evaluate(model)`` runs every ``eval_every`` steps and once at the end (in eval mode, without
     gradients), its results are logged to ``metrics.json`` and the last one is returned in
-    :attr:`FitResult.final_metrics`. The model stays on the training device afterwards.
+    :attr:`FitResult.final_metrics`. The model stays on the training device afterward.
     """
     if cfg.steps <= 0:
         raise ValueError("TrainConfig.steps must be positive")

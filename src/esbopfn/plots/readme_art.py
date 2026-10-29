@@ -52,7 +52,7 @@ DEFAULTS: dict[str, Any] = {
         "rig": "without_weight",
         "method": "bo",
         "provenance": "thesis",
-        # (seed, trial index, shown stop as a fraction of T); the thesis slide's three trials
+        # (seed, trial index, shown stop as a fraction of T), the thesis slide's three trials
         "trials": [[4, 25, 1.0], [1, 12, 0.9 / 2.6], [0, 3, 0.6 / 2.6]],
         "extra_context": [4, [19, 20, 21, 22, 23, 24]],   # more trials of seed 4 as context
         "model": "xdecpfn/furuta/thesis/default",

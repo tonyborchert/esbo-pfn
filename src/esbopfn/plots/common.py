@@ -25,15 +25,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-import matplotlib
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 
-import matplotlib.pyplot as plt  # noqa: E402
-import numpy as np  # noqa: E402
-import pandas as pd  # noqa: E402
-from matplotlib.axes import Axes  # noqa: E402
-from matplotlib.figure import Figure  # noqa: E402
-
-from esbopfn.plots import style  # noqa: E402
+from esbopfn.plots import style
 
 log = logging.getLogger(__name__)
 
@@ -398,11 +396,30 @@ class Sidecar:
         return "\n".join(lines).rstrip() + "\n"
 
 
-def write_sidecar(out_dir: Path, name: str, sidecar: Sidecar, files: Sequence[Path] = ()
-                  ) -> Path:
+def home_relative(text: str, home: Path | str | None = None) -> str:
+    """``text`` with the absolute output root written as ``$PFN_HOME`` (default root:
+    :func:`esbopfn.config.pfn_home`), so the sidecars carry no machine-specific paths."""
+    from esbopfn.config import pfn_home
+
+    root = Path(home) if home is not None else pfn_home()
+    for form in sorted({str(root), str(root.resolve())}, key=len, reverse=True):
+        text = text.replace(form, "$PFN_HOME")
+    return text
+
+
+def db_home(db: Any) -> Path | None:
+    """The output root of a database at ``<home>/benchmarks/db.sqlite``, else None."""
+    path = getattr(db, "path", None)
+    if path is None or Path(path).parent.name != "benchmarks":
+        return None
+    return Path(path).parent.parent
+
+
+def write_sidecar(out_dir: Path, name: str, sidecar: Sidecar, files: Sequence[Path] = (),
+                  home: Path | str | None = None) -> Path:
     path = Path(out_dir) / f"{name}.md"
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(sidecar.text(name, files), encoding="utf-8")
+    path.write_text(home_relative(sidecar.text(name, files), home), encoding="utf-8")
     return path
 
 
@@ -426,6 +443,7 @@ class Context:
     out_dir: Path
     fmt: str
     theme: str
+    group: str = ""
 
 
 @dataclass
@@ -463,12 +481,13 @@ def render_group(group: str, figures: Sequence[FigureSpec], cfg: dict[str, Any],
     ``skipped.txt``), an error in one figure does not stop the others but is raised at the end."""
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
+    home = db_home(db)
     wanted = set(only or cfg.get("only") or [f.name for f in figures])
     report = RenderReport()
     for spec in figures:
         if spec.name not in wanted:
             continue
-        ctx = Context(cfg=cfg, db=db, out_dir=out_dir, fmt=fmt, theme=theme)
+        ctx = Context(cfg=cfg, db=db, out_dir=out_dir, fmt=fmt, theme=theme, group=group)
         try:
             with style.thesis_style(theme, usetex=_usetex(cfg)):
                 result = spec.draw(ctx)
@@ -483,7 +502,7 @@ def render_group(group: str, figures: Sequence[FigureSpec], cfg: dict[str, Any],
                 p = out_dir / fname
                 p.write_text(text, encoding="utf-8")
                 files.append(p)
-            side = write_sidecar(out_dir, spec.name, result.sidecar, files)
+            side = write_sidecar(out_dir, spec.name, result.sidecar, files, home)
             if own_md in result.texts:
                 side.write_text(side.read_text(encoding="utf-8") + "\n## Table\n\n"
                                 + result.texts[own_md].strip() + "\n", encoding="utf-8")
@@ -500,7 +519,8 @@ def render_group(group: str, figures: Sequence[FigureSpec], cfg: dict[str, Any],
             log.error("%s/%s failed:\n%s", group, spec.name, traceback.format_exc())
     skipped_file = out_dir / "skipped.txt"
     if report.skipped:
-        skipped_file.write_text("".join(f"{k}: {v}\n" for k, v in report.skipped.items()))
+        skipped_file.write_text(home_relative(
+            "".join(f"{k}: {v}\n" for k, v in report.skipped.items()), home))
     elif skipped_file.exists():
         skipped_file.unlink()
     if report.failed:
@@ -583,9 +603,11 @@ def prediction_frame(db: Any, kind: str, models: Iterable[str], problems: Iterab
                      prov: Provenance | None = None, native_only: bool = False) -> pd.DataFrame:
     """Rows of the finished ``prediction`` / ``prediction_ladder`` units of the given model
     templates (``{p}`` replaced) on ``problems``, with ``problem`` and ``model`` columns. A model
-    template is also matched by its thesis id (see :func:`thesis_model_id`) unless
-    ``native_only``. The ``model`` column holds the template's resolved id either way."""
+    template is also matched by its thesis ids (:func:`thesis_model_id`, then the imported
+    checkpoint ids of :func:`esbopfn.training.registry.thesis_ids`) unless ``native_only``. The
+    ``model`` column holds the template's resolved id either way."""
     from esbopfn.benchmarks.kinds.prediction import load_predictions, resolve_model
+    from esbopfn.training.registry import thesis_ids
 
     frames = []
     used: list[Any] = []
@@ -594,9 +616,10 @@ def prediction_frame(db: Any, kind: str, models: Iterable[str], problems: Iterab
             mid = resolve_model(tmpl, p)
             units = db.query(kind, problem=p, model=mid)
             if not units and not native_only:
-                tid = thesis_model_id(mid)
-                if tid != mid:
-                    units = db.query(kind, problem=p, model=tid)
+                for tid in dict.fromkeys([thesis_model_id(mid), *thesis_ids(mid)]):
+                    units = db.query(kind, problem=p, model=tid) if tid != mid else []
+                    if units:
+                        break
             if not units:
                 continue
             df = load_predictions(units)

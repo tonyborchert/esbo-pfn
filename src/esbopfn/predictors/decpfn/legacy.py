@@ -8,7 +8,7 @@ DecPFN section and discrepancies D5, D9, D10, D14, D15). Their forward pass diff
   token position, the features z-scored with the old per-feature statistics,
 - features ``(y, Y, j, J)`` per token, ``Y`` the old level channels, ``y`` their per-step
   increments (Cartpole: the measured velocities and the action increment), ``j`` the stage cost.
-  ``y`` and ``j`` are summed over the steps since the previous token. DecPFN-noStates reads
+  ``y`` and ``j`` are summed over the steps since the previous token. DecPFN-no-St reads
   ``(j, J)`` only,
 - the old channels include extras the thesis channels do not have: the Boiler heater command, the
   Cartpole bang-bang action with the position taken relative to the goal and the constant Furuta

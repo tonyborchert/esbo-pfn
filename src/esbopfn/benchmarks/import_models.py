@@ -19,7 +19,7 @@ model id of the same name, ``decpfn/<p>/thesis-<head>/<size>``,
 served by :mod:`esbopfn.predictors.decpfn.legacy` and :mod:`esbopfn.predictors.lcpfn.legacy`.
 Their ``config.yaml`` carries ``provenance: thesis`` and ``legacy: true``.
 
-Entry point of ``pfn models import-thesis --from DIR``::
+Entry point of ``pfn import thesis-models --from DIR``::
 
     import_thesis(from_dir, *extra_dirs, home=None, problems=None, overwrite=False)
         -> list[ImportedModel]
@@ -59,6 +59,7 @@ class ImportedModel:
     source: Path
     step: int
     note: str = ""
+    skipped: bool = False
 
 
 def _sha256(path: Path) -> str:
@@ -89,6 +90,17 @@ def _target(model: str, problem: str, home: Path | str | None, overwrite: bool) 
     if is_trained(out) and not overwrite:
         raise FileExistsError(f"{out} already holds an imported model (overwrite=True replaces it)")
     return out
+
+
+def _existing(model_id: str, home: Path | str | None, source: Path) -> ImportedModel | None:
+    """The skip record of an already imported ``model_id``, None if it is not imported yet."""
+    from esbopfn.training.registry import is_trained, model_dir
+
+    out = model_dir(model_id, home)
+    if not is_trained(out):
+        return None
+    log.debug("%s is already imported, skipped (overwrite replaces it)", model_id)
+    return ImportedModel(model_id, out, source, 0, "already imported, skipped", skipped=True)
 
 
 def _note(model: str, problem: str, step: int) -> str:
@@ -252,8 +264,8 @@ def import_thesis(from_dir: Path | str, *extra_dirs: Path | str, home: Path | st
                   overwrite: bool = False) -> list[ImportedModel]:
     """Import every thesis checkpoint found in the given directories.
 
-    ``problems`` restricts the import, ``overwrite`` replaces models imported before. Returns the
-    imported models (one per model id).
+    ``problems`` restricts the import. Models imported before are skipped (``skipped=True`` in
+    the returned record), ``overwrite`` replaces them. Returns one record per model id.
     """
     want = set(problems) if problems is not None else None
     ft: list[Path] = []
@@ -285,8 +297,13 @@ def import_thesis(from_dir: Path | str, *extra_dirs: Path | str, home: Path | st
         for leaf in single_trajectory_leaves(Path(d).expanduser()):
             if want is not None and leaf.parts[-3] not in want:
                 continue
-            done.append(import_single_trajectory_leaf(leaf, home, overwrite))
+            skip = None if overwrite else _existing("/".join(leaf.parts[-4:]), home, leaf)
+            done.append(skip or import_single_trajectory_leaf(leaf, home, overwrite))
     for (kind, prob), (_, path) in sorted(best.items()):
+        skip = None if overwrite else _existing(f"{kind}/{prob}/thesis/default", home, path)
+        if skip is not None:
+            done.append(skip)
+            continue
         if kind == "ftpfn":
             done.append(import_ftpfn_checkpoint(path, prob, home, overwrite))
             continue
@@ -296,5 +313,6 @@ def import_thesis(from_dir: Path | str, *extra_dirs: Path | str, home: Path | st
             continue
         done.append(import_xdecpfn_checkpoint(path, cal[name], prob, home, overwrite))
     for m in done:
-        log.info("imported %s from %s%s", m.model_id, m.source, f" ({m.note})" if m.note else "")
+        if not m.skipped:
+            log.info("imported %s from %s%s", m.model_id, m.source, f" ({m.note})" if m.note else "")
     return done

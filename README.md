@@ -112,6 +112,12 @@ Adriaensen et al. 2023 with the crash-aware head, which sees only `(t, J_t)`.
 *DecPFN (left) predicts the horizon from every causal prefix in one pass. LC-PFN (right) splits a
 curve into context points and queries at the remaining grid steps.*
 
+<p align="center"><img src="assets/figures/single_trajectory/lcpfn_decpfn_example.png" width="860" alt="LC-PFN and DecPFN predictions on one Cartpole trial"></p>
+
+*LC-PFN (left three panels) and DecPFN (right three panels) with the imported thesis weights on one
+Cartpole trial cut at 35, 65 and 85 % of the horizon, each panel showing the predicted density of
+the total cost right of `T` and the predicted crash probability in its corner.*
+
 **Baselines.** **Segment-GP** is the predictor of ESBO-GP (Stenger et al. 2025), one exact GP per
 segment between observed trial lengths. **Trajectory-TabPFN** and **Segment-TabPFN** use the
 released TabPFN-3 regressor without any training. Details in [docs/PREDICTORS.md](docs/PREDICTORS.md),

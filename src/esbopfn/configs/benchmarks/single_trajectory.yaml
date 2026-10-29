@@ -1,9 +1,9 @@
-# Single-trajectory predictors: fig:sim:lcpfn-decpfn-heads (DecPFN, DecPFN-noStates, LC-PFN x
+# Single-trajectory predictors: fig:sim:lcpfn-decpfn-heads (DecPFN, DecPFN-no-St, LC-PFN x
 # heads x training sizes, median LL of non-crashed queries pooled over n and cutoffs, centered per
 # problem on the drawn arms) and fig:sim:lcpfn-decpfn-stop-sheet (binned heads, 100k and 1M, on
 # PT2, Cartpole and Furuta). fig:sim:lcpfn-decpfn-example is a live inference figure and
 # fig:app:hpo-gridsearch reads the HPO results under $PFN_HOME/hpo, neither needs units.
-description: LC-PFN, DecPFN and DecPFN-noStates over heads and training sizes
+description: LC-PFN, DecPFN and DecPFN-no-St over heads and training sizes
 kinds: [instances, fields, prediction, prediction_timing]
 problems: [boiler, threetank_pi, pt2_deadtime, cartpole, furuta]
 instances: {count: 50}

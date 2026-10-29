@@ -1,8 +1,10 @@
 """Resolution of the output root ``PFN_HOME``, the cluster profile name and the config directory.
 
-Only two environment variables exist in this project. ``PFN_HOME`` is the output root (default
+Two environment variables configure this project. ``PFN_HOME`` is the output root (default
 ``./out`` relative to the current working directory) and ``PFN_PROFILE`` names the cluster profile
-(default ``local``). Both are read when a function is called, never at import time.
+(default ``local``). Both are read when a function is called, never at import time. The cluster
+profiles additionally read the Slurm accounts (``PFN_SLURM_ACCOUNT_CPU``, ``PFN_SLURM_ACCOUNT_GPU``)
+and their ``${HPCWORK}``/``${PROJECT}`` placeholders (:mod:`esbopfn.cluster.profile`).
 """
 
 from __future__ import annotations

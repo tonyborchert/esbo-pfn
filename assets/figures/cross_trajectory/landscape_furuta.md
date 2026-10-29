@@ -24,9 +24,9 @@ Files: `landscape_furuta.png`
 
 ## Data
 - Plant: instance 1 of the thesis-imported Furuta instance list (first of instances 0-9 with a true crash share in [0.25, 0.85] (0.62)). Slice: `landscapes` unit slice seed 1, 24 x 24 grid, 6 repeats per point, extent 0.2729.
-- XDecPFN context: prefixes of one `xdecpfn-pi` run (seed 0, 64 trials, 6 crashed) on the same plant with `xdecpfn/furuta/thesis/default` (checkpoint 1526703a195b9062), cached under `_cache/examples/`.
-- FT-PFN context: prefixes of one `ftpfn-ei` run (seed 0, 64 trials, 16 crashed) on the same plant with `ftpfn/furuta/thesis/default` (checkpoint 31d80ad8f4bb7557), cached under `_cache/examples/`.
-- Live results (simulated runs, true slice, model predictions) are cached as npz under `_cache/examples/` next to this figure, keyed by plant, slice, model checkpoint hash and context. Delete that directory to recompute them.
+- XDecPFN context: prefixes of one `xdecpfn-pi` run (seed 0, 64 trials, 6 crashed) on the same plant with `xdecpfn/furuta/thesis/default` (checkpoint 1526703a195b9062), cached under `$PFN_HOME/figures/_cache/cross_trajectory/`.
+- FT-PFN context: prefixes of one `ftpfn-ei` run (seed 0, 64 trials, 16 crashed) on the same plant with `ftpfn/furuta/thesis/default` (checkpoint 31d80ad8f4bb7557), cached under `$PFN_HOME/figures/_cache/cross_trajectory/`.
+- Live results (simulated runs, true slice, model predictions) are cached as npz under `$PFN_HOME/figures/_cache/cross_trajectory/`, keyed by plant, slice, model checkpoint hash and context. Delete that directory to recompute them.
 
 ## Sources
-- file `_cache/examples/slice_furuta_thesis_i0001_s1_g24_r6/landscape.npz`
+- file `$PFN_HOME/figures/_cache/cross_trajectory/slice_furuta_thesis_i0001_s1_g24_r6/landscape.npz`

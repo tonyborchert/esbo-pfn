@@ -26,7 +26,7 @@ def make_predictor(args: tuple[str, ...], spec: ProblemSpec, **kw: Any):
     home = kw.pop("home", None)
     mid = ModelId.parse(model_id)
     if mid.variant == "thesis":
-        path = resolve(model_id, home, hint="Import it with `pfn models import-thesis --from DIR`.")
+        path = resolve(model_id, home, hint="Import it with `pfn import thesis-models --from DIR`.")
         from esbopfn.predictors.ftpfn.legacy import LegacyFTPFNPredictor
 
         return LegacyFTPFNPredictor.from_dir(path, spec, name=mid.short, **kw)

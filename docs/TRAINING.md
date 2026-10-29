@@ -19,11 +19,14 @@ pfn models show decpfn/cartpole/binned/1M
 ```
 
 `pfn train <model> --problem P [--head binned|gaussian|linear|all] [--size 100k|1M|all]
-[--hparams FILE] [--seed S] [--run R] [--steps N] [--time-limit S] [--device auto|cuda|mps|cpu]`.
+[--hparams FILE] [--seed S] [--run R] [--steps N] [--rows N] [--time-limit S]
+[--device auto|cuda|mps|cpu]`.
 Models: `lcpfn`, `lcpfn-last`, `decpfn`, `decpfn-nostates`, `decpfn-nodeadtime` and
 `decpfn-nodeadtime-nostates` (Furuta only), and `xdecpfn`, `ftpfn` (see
 [CROSS_TRAJECTORY.md](CROSS_TRAJECTORY.md)). Head and size default to `binned` and `1M`. `--steps` overrides the step count (debugging and smoke runs, a count beyond one pass
-over the data starts a fresh seeded pass), `--time-limit` caps the training time. A finished model
+over the data starts a fresh seeded pass), `--rows N` trains LC-PFN and DecPFN models on the first
+`N` rows of a partial pool (smoke runs, together with `--run`, the model directory records
+`n_examples`), `--time-limit` caps the training time. A finished model
 directory is never retrained, an unfinished one resumes from its checkpoint. On a cluster, wrap the
 command in `pfn submit --kind train -- pfn train ...` (see [CLUSTER.md](CLUSTER.md)).
 

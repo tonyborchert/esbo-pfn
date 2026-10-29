@@ -2,12 +2,18 @@ import matplotlib.pyplot as plt
 import pytest
 
 from esbopfn.plots.style import (
-    DISPLAY_NAME, METHOD_COLORS, display_name, figsize, method_color, save, thesis_style,
+    DISPLAY_NAME,
+    METHOD_COLORS,
+    display_name,
+    figsize,
+    method_color,
+    save,
+    thesis_style,
 )
 
 THESIS_NAMES = [
     "ESRS", "BO", "ESBO-GP", "ESBO-T-TabPFN", "ESBO-Oracle", "DecPFN", "DecPFN-H", "XDecPFN-PI",
-    "FT-PFN-EI", "LC-PFN", "LC-PFN-last", "DecPFN-noStates", "Segment-GP", "Trajectory-TabPFN",
+    "FT-PFN-EI", "LC-PFN", "LC-PFN-last", "DecPFN-no-St", "Segment-GP", "Trajectory-TabPFN",
     "Segment-TabPFN", "XDecPFN", "FT-PFN",
 ]
 

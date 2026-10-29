@@ -119,6 +119,54 @@ def resolve(model_id: str | ModelId, home: Path | str | None = None, hint: str =
     return path
 
 
+#: Native model id -> imported thesis ids (``pfn import thesis-models``), see :func:`thesis_ids`.
+CROSS_TRAJECTORY_FAMILIES = ("xdecpfn", "ftpfn")
+
+
+def thesis_ids(model_id: str | ModelId) -> list[str]:
+    """The imported thesis ids that stand in for a native model id, in preference order.
+
+    ``xdecpfn|ftpfn/<p>/default/default`` -> ``.../thesis/default``,
+    ``decpfn|decpfn-nostates/<p>/<head>/<size>`` -> ``.../thesis-<head>/<size>``,
+    ``lcpfn/<p>/<head>/<size>`` -> ``.../thesis-<head>/<size>``, then
+    ``.../thesis-<head>-linearnorm/<size>`` (the import of the linear input normalization when
+    the z-score export is absent). Empty for every other id.
+    """
+    try:
+        mid = ModelId.parse(model_id)
+    except ValueError:
+        return []
+    if mid.variant.startswith("thesis") or mid.run != DEFAULT_RUN:
+        return []
+    base = f"{mid.model}/{mid.problem}"
+    if mid.model in CROSS_TRAJECTORY_FAMILIES:
+        native = (mid.variant, mid.size) == ("default", "default")
+        return [f"{base}/thesis/default"] if native else []
+    if mid.model in ("decpfn", "decpfn-nostates"):
+        return [f"{base}/thesis-{mid.variant}/{mid.size}"]
+    if mid.model == "lcpfn":
+        return [f"{base}/thesis-{mid.variant}/{mid.size}",
+                f"{base}/thesis-{mid.variant}-linearnorm/{mid.size}"]
+    return []
+
+
+def model_candidates(model_id: str) -> list[str]:
+    """``model_id`` followed by its imported thesis ids (:func:`thesis_ids`)."""
+    return [model_id, *thesis_ids(model_id)]
+
+
+def first_trained(model_id: str, home: Path | str | None = None) -> str:
+    """The first trained id of :func:`model_candidates`, else ``model_id`` unchanged (so the
+    caller's :class:`ModelNotTrained` names the native id)."""
+    for mid in model_candidates(model_id):
+        try:
+            if is_trained(model_dir(mid, home)):
+                return mid
+        except ValueError:
+            return model_id
+    return model_id
+
+
 def git_hash() -> str | None:
     root = repo_root()
     if root is None:

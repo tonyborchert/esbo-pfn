@@ -499,11 +499,11 @@ def _label_points(ax: Any, labels: list[tuple[str, str, tuple[float, float]]],
              ((-9, -7), "right", "top"), ((9, -7), "left", "top"), ((0, 20), "center", "bottom"),
              ((-14, 14), "right", "bottom"), ((14, 14), "left", "bottom")]
     placed: list[Any] = []
-    for text, colour, xy in labels:
+    for text, color, xy in labels:
         best = None
         for (dx, dy), ha, va in cands:
             t = ax.annotate(text, xy, xytext=(dx, dy), textcoords="offset points", ha=ha, va=va,
-                            fontsize=fontsize, color=colour, zorder=12)
+                            fontsize=fontsize, color=color, zorder=12)
             bb = t.get_window_extent(renderer).expanded(1.05, 1.1)
             inside = (bb.x0 >= box.x0 and bb.x1 <= box.x1 and bb.y0 >= box.y0
                       and bb.y1 <= box.y1)
@@ -517,7 +517,7 @@ def _label_points(ax: Any, labels: list[tuple[str, str, tuple[float, float]]],
             t.remove()
         if best is None:
             t = ax.annotate(text, xy, xytext=(0, 11), textcoords="offset points",
-                            ha="center", va="bottom", fontsize=fontsize, color=colour, zorder=12)
+                            ha="center", va="bottom", fontsize=fontsize, color=color, zorder=12)
             placed.append(t.get_window_extent(renderer))
 
 

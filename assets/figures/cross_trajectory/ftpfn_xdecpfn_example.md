@@ -24,5 +24,5 @@ Files: `ftpfn_xdecpfn_example.png`
 ## Data
 - Run i0008_s00, query trial 64, T = 1000, true J_T = 6152.58.
 - query named by the imported thesis task table `tasks-thesis`: run i0008_s00, trial index 64, thesis J_T = 6649.86
-- Oracle run simulated live on instance 8 of the thesis-imported instance list (seed 0 of the `fields` kind), cached under `_cache/examples/`
-- Live results (simulated runs, true slice, model predictions) are cached as npz under `_cache/examples/` next to this figure, keyed by plant, slice, model checkpoint hash and context. Delete that directory to recompute them.
+- Oracle run simulated live on instance 8 of the thesis-imported instance list (seed 0 of the `fields` kind), cached under `$PFN_HOME/figures/_cache/cross_trajectory/`
+- Live results (simulated runs, true slice, model predictions) are cached as npz under `$PFN_HOME/figures/_cache/cross_trajectory/`, keyed by plant, slice, model checkpoint hash and context. Delete that directory to recompute them.

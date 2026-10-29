@@ -1,12 +1,24 @@
 [project]
 name = "esbo-pfn"
 version = "0.1.0"
-description = "Early stopping Bayesian optimization of controllers with prior-data fitted networks"
+description = "Early stopping Bayesian optimization for controller tuning with prior-fitted networks"
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Tony Borchert" }]
 requires-python = ">=3.12,<3.13"
+keywords = ["bayesian optimization", "early stopping", "prior-fitted networks", "controller tuning",
+            "furuta pendulum"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: C++",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 dependencies = [
     "numpy",
     "scipy",
@@ -19,6 +31,11 @@ dependencies = [
     "websockets",
     "pytest",
 ]
+
+[project.urls]
+# placeholders, set to the published repository
+Repository = "https://github.com/OWNER/esbo-pfn"
+Documentation = "https://github.com/OWNER/esbo-pfn/tree/main/docs"
 
 [project.scripts]
 pfn = "esbopfn.cli:main"
@@ -40,3 +57,21 @@ markers = [
     "slurm: needs sbatch on PATH (--run-slurm or sbatch found)",
     "hardware: needs a reachable rig server (--run-hardware only)",
 ]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+# zip() without strict= and small named lambdas are accepted style here
+ignore = ["B905", "E731"]
+
+[tool.ruff.lint.pycodestyle]
+# new code is formatted to 100 columns, existing hand-wrapped lines may run to 120
+max-line-length = 120
+
+[tool.ruff.lint.flake8-bugbear]
+# frozen dataclasses used as argument defaults
+extend-immutable-calls = ["esbopfn.benchmarks.runner.Shard", "esbopfn.problems.prior.Pilot"]

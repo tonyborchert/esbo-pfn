@@ -676,7 +676,6 @@ def _levels(cells: Sequence[Cell], depth: int) -> list[list[tuple[str, int, int]
         for i, c in enumerate(cells):
             parts = c.group.split("/")
             key = "/".join(parts[:d + 1])
-            name = parts[d] if d < len(parts) else ""
             if row and row[-1][0] == key:
                 row[-1] = (key, row[-1][1], i)
             else:

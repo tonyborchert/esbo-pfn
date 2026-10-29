@@ -3,7 +3,7 @@
 Runs in the OLD environment, because the LC-PFN checkpoints are pickled whole modules that only
 unpickle with the old class paths::
 
-    OLD=/Users/tonyborchert/Documents/Uni/bachelorarbeit/impl/prediction
+    OLD=~/bachelorarbeit/impl/prediction    # checkout of the earlier implementation
     PYTHONPATH=$OLD:$OLD/util $OLD/.venv/bin/python tools/export_thesis_single_trajectory.py \\
         export --models ~/Downloads/dynformer_timing_bundle/repo/prediction/models \\
         --out ~/Downloads/thesis_single_trajectory_export

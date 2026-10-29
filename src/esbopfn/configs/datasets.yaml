@@ -84,11 +84,11 @@ datasets:
   fields/{p}/oracle65:
     kind: fields
     placeholder: true
-    description: ESBO-Oracle runs of 65 trials on screened instances (prediction benchmark queries), written by the benchmark phase
+    description: ESBO-Oracle runs of 65 trials on screened instances (prediction benchmark queries), written by the `fields` benchmark units (pfn bench run --kind fields)
   fields/{p}/oracle181:
     kind: fields
     placeholder: true
-    description: ESBO-Oracle runs of N_max + 1 trials (context ladder queries), written by the benchmark phase
+    description: ESBO-Oracle runs of N_max + 1 trials (context ladder queries), written by the `fields` benchmark units (pfn bench run --kind fields)
 
 # Datasets each trainable model needs (pfn data gen --for train <model> --problem <p>).
 models:

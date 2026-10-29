@@ -8,7 +8,7 @@ from collections import Counter
 
 from esbopfn.benchmarks.db import Db
 from esbopfn.benchmarks.kinds import discover_kinds
-from esbopfn.benchmarks.runner import parse_shard, plan, run_units, select_groups
+from esbopfn.benchmarks.runner import parse_set, parse_shard, plan, run_units, select_groups
 
 log = logging.getLogger(__name__)
 
@@ -21,6 +21,11 @@ def register(subparsers: argparse._SubParsersAction) -> None:
     p.add_argument("--shard", default=None, help="i/n: only every n-th unit starting at i")
     p.add_argument("--kind", action="append", default=[],
                    help="only units of this kind, repeatable (run dependency stages separately)")
+    p.add_argument("--problem", action="append", default=[],
+                   help="only this problem, repeatable (default: the problems of the spec)")
+    p.add_argument("--set", dest="sets", action="append", default=[], metavar="SECTION.KEY=VALUE",
+                   help="override a value of the group spec, repeatable (YAML value), e.g. "
+                        "instances.count=3 or optimization.strategies=[esrs]")
     p.set_defaults(func=run)
 
 
@@ -35,7 +40,8 @@ def run(args: argparse.Namespace) -> int:
         return 0
     db = Db()
     shard, kinds = parse_shard(args.shard), list(args.kind) or None
-    units = plan(groups, db, shard, kinds)
+    over = {"problems": list(args.problem) or None, "sets": parse_set(args.sets) or None}
+    units = plan(groups, db, shard, kinds, **over)
     if args.action == "plan":
         missing = [u for u in units if not db.has(u.kind, u.key)]
         total, todo = Counter(u.kind for u in units), Counter(u.kind for u in missing)
@@ -47,7 +53,7 @@ def run(args: argparse.Namespace) -> int:
     # Units whose inputs were produced in this pass (prediction units need a frozen task table,
     # which needs the whole field) appear in the next plan.
     for _ in range(4):
-        later = [u for u in plan(groups, db, shard, kinds) if not db.has(u.kind, u.key)]
+        later = [u for u in plan(groups, db, shard, kinds, **over) if not db.has(u.kind, u.key)]
         if not later:
             break
         more, _skip = run_units(later, db)

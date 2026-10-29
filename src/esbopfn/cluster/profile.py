@@ -12,23 +12,54 @@ from esbopfn.util.yaml import load_yaml
 
 JOB_KINDS: tuple[str, ...] = ("gen", "train", "bench", "bench_gpu")
 
-_PLACEHOLDER = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)(?::-([^}]*))?\}")
+_NAME = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+
+
+def _closing_brace(value: str, start: int) -> int:
+    """Index of the ``}`` closing the ``${`` at ``start`` (nested placeholders allowed), -1 if
+    there is none."""
+    depth, k = 0, start
+    while k < len(value):
+        if value.startswith("${", k):
+            depth += 1
+            k += 2
+            continue
+        if value[k] == "}":
+            depth -= 1
+            if depth == 0:
+                return k
+        k += 1
+    return -1
 
 
 def expand_env(value: str, environ: dict[str, str] | None = None) -> str | None:
-    """Expand ``${VAR}`` and ``${VAR:-default}`` placeholders, None if one stays unresolved."""
+    """Expand ``${VAR}`` and ``${VAR:-default}`` placeholders (the default may hold placeholders
+    itself, ``${A:-${B}}``), None if one stays unresolved."""
     env = os.environ if environ is None else environ
-
-    def sub(m: re.Match[str]) -> str:
-        name, default = m.group(1), m.group(2)
-        if name in env and env[name] != "":
-            return env[name]
-        return default if default is not None else m.group(0)
-
-    expanded = _PLACEHOLDER.sub(sub, value)
-    if "${" in expanded:
-        expanded = _PLACEHOLDER.sub(sub, expanded)
-    return None if "${" in expanded else expanded
+    out: list[str] = []
+    i = 0
+    while True:
+        j = value.find("${", i)
+        if j < 0:
+            out.append(value[i:])
+            return "".join(out)
+        out.append(value[i:j])
+        k = _closing_brace(value, j)
+        if k < 0:
+            return None
+        name, sep, default = value[j + 2:k].partition(":-")
+        if not _NAME.fullmatch(name):
+            return None
+        if env.get(name, "") != "":
+            out.append(env[name])
+        elif sep:
+            sub = expand_env(default, env)
+            if sub is None:
+                return None
+            out.append(sub)
+        else:
+            return None
+        i = k + 1
 
 
 @dataclass(frozen=True)

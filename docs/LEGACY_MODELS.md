@@ -1,6 +1,6 @@
 # Thesis DecPFN and LC-PFN checkpoints
 
-The DecPFN, DecPFN-noStates and LC-PFN weights of the earlier implementation can be imported into
+The DecPFN, DecPFN-no-St and LC-PFN weights of the earlier implementation can be imported into
 the model tree and served through the usual registry. They keep the old architecture, features,
 grids and scaling: small legacy classes reproduce the old forward pass with the original
 parameter names and load the weights strictly (`src/esbopfn/predictors/decpfn/legacy.py`,
@@ -13,7 +13,7 @@ The LC-PFN checkpoints are pickled whole modules that only unpickle with the old
 a script that runs in the old environment writes them into a neutral format first:
 
 ```bash
-OLD=/Users/tonyborchert/Documents/Uni/bachelorarbeit/impl/prediction
+OLD=~/bachelorarbeit/impl/prediction   # checkout of the earlier implementation
 PYTHONPATH=$OLD:$OLD/util $OLD/.venv/bin/python tools/export_thesis_single_trajectory.py export \
     --models ~/Downloads/dynformer_timing_bundle/repo/prediction/models \
     --out ~/Downloads/thesis_single_trajectory_export
@@ -40,7 +40,7 @@ loads every checkpoint with the old code and writes `<out>/<family>/<problem>/<v
 | `transfer/10`, `transfer/100` | size `100k`, `1M` |
 | `<p>/universal`, `furuta/lqr-new-realistic/rigreset(1,False)` | `<p>`, `furuta` (`furuta/lqr` is skipped) |
 
-The timing bundle holds 88 such leaves: DecPFN and DecPFN-noStates with the binned, Gaussian and
+The timing bundle holds 88 such leaves: DecPFN and DecPFN-no-St with the binned, Gaussian and
 linear heads at both sizes on all five problems (60), and LC-PFN with linear input normalization
 (28, Furuta without the Gaussian head). It has no `_zscore` leaf, so every LC-PFN is imported as
 `thesis-<head>-linearnorm`. The `_zscore` leaves import under `thesis-<head>` as soon as an
@@ -82,7 +82,7 @@ output, and the known outcome for crashed and complete queries.
 
 - `LegacyDecPFNPredictor` feeds the old tokens at the 0-based steps `0, s, 2s, ... < T - 1` that
   lie before `t_obs` and reads the prediction at the last one. `predictable_steps` are the 1-based
-  token steps `1, 1 + s, ...`. Features per token are `[y, Y, j, J]` (DecPFN-noStates `[j, J]`),
+  token steps `1, 1 + s, ...`. Features per token are `[y, Y, j, J]` (DecPFN-no-St `[j, J]`),
   `y` and `j` summed since the previous token. `Y` and `y` are rebuilt from the `Trial`: Boiler
   `[temperature, u]` with the heater command recovered from the stage costs, Three-Tank
   `[V2, V3, V4]`, PT2 `[y]`, each with its per-step increments, Cartpole
@@ -99,7 +99,7 @@ environment on golden rollouts of `tests/golden`, nominal plant, noise off):
 | fixture | old inputs through the legacy network | new simulator through the legacy predictor |
 |---|---|---|
 | DecPFN Cartpole binned 1M | 7e-9 | 9e-8 |
-| DecPFN-noStates Cartpole binned 1M | 3e-9 | 4e-7 |
+| DecPFN-no-St Cartpole binned 1M | 3e-9 | 4e-7 |
 | DecPFN Furuta binned 1M | 2e-9 | 1e-7 |
 | DecPFN Boiler, Three-Tank, PT2 binned 1M | ≤ 1e-8 | ≤ 4e-6 |
 | DecPFN Cartpole Gaussian 1M | relative 5e-9 | relative 9e-7 |

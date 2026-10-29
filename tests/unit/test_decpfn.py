@@ -14,6 +14,7 @@ from esbopfn.predictors.decpfn.model import DecPFN, DecPFNConfig
 from esbopfn.predictors.decpfn.train import train
 from esbopfn.problems.registry import get_spec
 from esbopfn.training import registry
+from esbopfn.training.common import seeded_torch
 from esbopfn.training.single_trajectory_data import PoolReader, simulate_pool
 
 ROW = dict(d_model=32, n_layers=2, lr=2e-3, weight_decay=0.0, dropout=0.0, batch_size=32,
@@ -29,14 +30,15 @@ def pools(tmp_path_factory):
 
 
 def test_forward_shapes_and_causality():
-    torch.manual_seed(0)
-    m = DecPFN(DecPFNConfig(n_features=6, n_outputs=11, d_model=32, n_layers=2)).eval()
+    with seeded_torch(0):
+        m = DecPFN(DecPFNConfig(n_features=6, n_outputs=11, d_model=32, n_layers=2)).eval()
+    g = torch.Generator().manual_seed(0)
     assert m.cfg.n_heads == 2
-    x = torch.randn(3, 9, 7)
+    x = torch.randn(3, 9, 7, generator=g)
     out = m(x)
     assert out.shape == (3, 9, 11)
     x2 = x.clone()
-    x2[:, 5:] = torch.randn(3, 4, 7)
+    x2[:, 5:] = torch.randn(3, 4, 7, generator=g)
     assert torch.allclose(m(x2)[:, :5], out[:, :5], atol=1e-5)
     assert not torch.allclose(m(x2)[:, 5:], out[:, 5:])
     assert m.blocks.layers[0].norm_first and m.blocks.norm is not None

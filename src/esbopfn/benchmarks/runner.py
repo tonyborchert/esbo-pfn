@@ -61,15 +61,56 @@ def select_groups(names: list[str] | None) -> dict[str, PlotGroup]:
     return {n: groups[n] if n in groups else spec_group(n) for n in names}
 
 
+def parse_set(items: list[str] | None) -> dict[str, Any]:
+    """``["optimization.instances=1", "instances.count=3"]`` -> ``{"optimization.instances": 1,
+    ...}`` with YAML-parsed values."""
+    import yaml
+
+    out: dict[str, Any] = {}
+    for item in items or []:
+        path, sep, value = item.partition("=")
+        if not sep or not path.strip():
+            raise ValueError(f"--set takes section.key=value, got {item!r}")
+        out[path.strip()] = yaml.safe_load(value)
+    return out
+
+
+def with_overrides(cfg: dict[str, Any], problems: list[str] | None = None,
+                   sets: dict[str, Any] | None = None) -> dict[str, Any]:
+    """A copy of a group spec restricted to ``problems`` and with the dotted ``sets`` applied
+    (small local runs, for example ``instances.count=3``)."""
+    import copy
+
+    out = copy.deepcopy(cfg or {})
+    if problems:
+        out["problems"] = [p for p in (out.get("problems") or problems) if p in problems] or list(problems)
+        for sec in out.values():
+            if isinstance(sec, dict) and isinstance(sec.get("problems"), list):
+                sec["problems"] = [p for p in sec["problems"] if p in problems]
+    for path, value in (sets or {}).items():
+        node = out
+        *parents, leaf = path.split(".")
+        for name in parents:
+            node = node.setdefault(name, {})
+            if not isinstance(node, dict):
+                raise ValueError(f"--set {path}: {name} is not a section")
+        node[leaf] = value
+    return out
+
+
 def plan(groups: dict[str, PlotGroup], db: Db, shard: Shard = Shard(),
-         kinds: list[str] | None = None) -> list[PlannedUnit]:
+         kinds: list[str] | None = None, problems: list[str] | None = None,
+         sets: dict[str, Any] | None = None) -> list[PlannedUnit]:
     """Deduplicated units the groups need (only ``kinds`` if given), sorted by the dependency
-    order of the kinds and then by hash, restricted to one shard."""
+    order of the kinds and then by hash, restricted to one shard. ``problems`` and ``sets``
+    adjust the group specs (:func:`with_overrides`)."""
     from esbopfn.benchmarks.groups import kind_rank
 
     seen: dict[tuple[str, str], PlannedUnit] = {}
     for name, group in groups.items():
-        for kind, key in group.needs(group_config(name), db):
+        cfg = with_overrides(group_config(name), problems, sets) if problems or sets \
+            else group_config(name)
+        for kind, key in group.needs(cfg, db):
             if kinds and kind not in kinds:
                 continue
             h = key_hash(key)

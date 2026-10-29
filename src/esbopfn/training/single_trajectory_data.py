@@ -346,17 +346,18 @@ class TrainingPools:
     val_id: str
 
 
-def training_pools(model: str, problem: str, size: str,
-                   home: Path | str | None = None) -> TrainingPools:
+def training_pools(model: str, problem: str, size: str, home: Path | str | None = None,
+                   rows: int | None = None) -> TrainingPools:
     """Readers of the pools ``configs/datasets.yaml`` lists for ``model`` on ``problem``. The
-    training reader is limited to the first ``SIZES[size]`` rows of the (1M) pool."""
+    training reader is limited to the first ``SIZES[size]`` rows of the (1M) pool, or to the
+    first ``rows`` rows when given (smoke runs on a partial pool)."""
     from esbopfn.generators.datasets import dataset_dir, load_catalog
 
     if size not in SIZES:
         raise ValueError(f"size must be one of {sorted(SIZES)}, got {size!r}")
     cat = load_catalog()
     train_id, val_id = cat.for_model(model, problem)
-    n = SIZES[size]
+    n = SIZES[size] if rows is None else max(1, min(int(rows), SIZES[size]))
     hint = f"Generate it with `pfn data gen --for train {model} --problem {problem}`."
     out = []
     for did, count in ((train_id, n), (val_id, cat.resolve(val_id).count)):
@@ -365,7 +366,8 @@ def training_pools(model: str, problem: str, size: str,
             raise DataMissing(f"dataset {did} is missing at {path}. {hint}")
         reader = PoolReader(path, limit=count)
         if len(reader) < count:
-            raise DataMissing(f"dataset {did} has {len(reader)} of {count} rows. {hint}")
+            raise DataMissing(f"dataset {did} has {len(reader)} of {count} rows. {hint} "
+                              "A smoke run can train on the rows present with `--rows`.")
         out.append(reader)
     return TrainingPools(out[0], out[1], n, train_id, val_id)
 

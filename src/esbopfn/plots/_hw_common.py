@@ -155,7 +155,7 @@ def violin_scale(populations: Sequence[np.ndarray], edges: np.ndarray,
     return min(best, cap) if best > 0 else cap
 
 
-def violin_body(ax: Any, values: np.ndarray, x: float, colour: str, *, edges: np.ndarray,
+def violin_body(ax: Any, values: np.ndarray, x: float, color: str, *, edges: np.ndarray,
                 scale: float, half_width: float, alpha: float) -> None:
     """A mirrored histogram drawn smooth (monotone PCHIP through the bin centers), no KDE."""
     from scipy.interpolate import PchipInterpolator
@@ -166,26 +166,26 @@ def violin_body(ax: Any, values: np.ndarray, x: float, colour: str, *, edges: np
         return
     first, last = int(occupied[0]), int(occupied[-1])
     half = np.clip(counts / len(values) / scale, 0.0, 1.0) * half_width
-    centres = 0.5 * (edges[:-1] + edges[1:])
-    ky = np.concatenate(([edges[first]], centres[first:last + 1], [edges[last + 1]]))
+    centers = 0.5 * (edges[:-1] + edges[1:])
+    ky = np.concatenate(([edges[first]], centers[first:last + 1], [edges[last + 1]]))
     kw = np.concatenate(([0.0], half[first:last + 1], [0.0]))
     ys = np.linspace(ky[0], ky[-1], 240)
     ws = np.clip(PchipInterpolator(ky, kw)(ys), 0.0, None)
-    ax.fill_betweenx(ys, x - ws, x + ws, facecolor=colour, edgecolor="none", alpha=alpha,
+    ax.fill_betweenx(ys, x - ws, x + ws, facecolor=color, edgecolor="none", alpha=alpha,
                      zorder=3)
 
 
-def violin_points(ax: Any, values: np.ndarray, x: float, colour: str, *, half_width: float,
+def violin_points(ax: Any, values: np.ndarray, x: float, color: str, *, half_width: float,
                   size: float = 3.0) -> None:
     n = len(values)
     offs = (np.linspace(-0.72, 0.72, n) if n > 1 else np.zeros(1)) * half_width
-    ax.scatter(x + offs, values, s=size, c=colour, alpha=0.9, linewidths=0.0, zorder=5)
+    ax.scatter(x + offs, values, s=size, c=color, alpha=0.9, linewidths=0.0, zorder=5)
 
 
-def violin_median(ax: Any, values: np.ndarray, x: float, colour: str, *,
+def violin_median(ax: Any, values: np.ndarray, x: float, color: str, *,
                   half_width: float) -> float:
     med = float(np.median(values))
-    ax.plot([x - half_width, x + half_width], [med, med], color=colour, lw=1.3, zorder=6,
+    ax.plot([x - half_width, x + half_width], [med, med], color=color, lw=1.3, zorder=6,
             solid_capstyle="butt")
     return med
 
@@ -221,5 +221,7 @@ def write_sidecar(out_dir: Path, name: str, *, shown: Sequence[str], metric: Seq
         parts.append("")
     path = Path(out_dir) / f"{name}.md"
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text("\n".join(parts))
+    from esbopfn.plots.common import home_relative
+
+    path.write_text(home_relative("\n".join(parts)))
     return path

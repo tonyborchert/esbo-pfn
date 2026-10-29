@@ -49,7 +49,7 @@ DISPLAY_NAME: dict[str, str] = {
     "esbo-oracle": "ESBO-Oracle",
     "decpfn": "DecPFN",
     "decpfn-h": "DecPFN-H",
-    "decpfn-nostates": "DecPFN-noStates",
+    "decpfn-nostates": "DecPFN-no-St",
     "xdecpfn": "XDecPFN",
     "xdecpfn-pi": "XDecPFN-PI",
     "xdecpfn-ei": "XDecPFN-EI",

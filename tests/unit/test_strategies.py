@@ -15,10 +15,10 @@ from esbopfn.strategies import (
     RunRecord,
     Strategy,
     make_strategy,
+    rules,
     run_optimization,
     strategy_rng,
 )
-from esbopfn.strategies import rules
 from esbopfn.strategies.base import incumbent, j_plus
 from esbopfn.strategies.gp_based import (
     DecPFNH,

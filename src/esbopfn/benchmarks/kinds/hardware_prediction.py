@@ -31,6 +31,14 @@ def unit_key(rig: str, bench: str, predictor: str, model: str, *,
             "methods": list(methods or DEFAULT_METHODS), "logs": logs, "provenance": provenance}
 
 
+def resolve_models(models: dict[str, str] | None, home: Any = None) -> dict[str, str]:
+    """Each model id replaced by the first trained of the native id and its imported thesis ids
+    (:func:`esbopfn.training.registry.first_trained`), so the unit key names the weights used."""
+    from esbopfn.training.registry import first_trained
+
+    return {name: first_trained(model, home) for name, model in (models or {}).items()}
+
+
 def enumerate_keys(spec: dict[str, Any]) -> list[dict[str, Any]]:
     """Native units for ``spec`` (``configs/benchmarks/hardware.yaml`` layout)."""
     pred = dict(spec.get("prediction") or {})
@@ -38,6 +46,8 @@ def enumerate_keys(spec: dict[str, Any]) -> list[dict[str, Any]]:
     methods = (spec.get("optimization") or {}).get("methods") or list(DEFAULT_METHODS)
     logs = pred.get("logs", "thesis")
     keys = []
+    pred["predictors"] = resolve_models(pred.get("predictors"))
+    pred["ablation"] = resolve_models(pred.get("ablation"))
     for rig in rigs:
         for name, model in (pred.get("predictors") or {}).items():
             keys.append(unit_key(rig, "ladder", name, model, ladder=pred.get("ladder"),

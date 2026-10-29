@@ -342,9 +342,8 @@ alone. The series behind them:
 
 Plots read the imported thesis predictions (`prediction` units with `provenance: thesis`) only
 where neither native units nor the thesis aggregates have a model. Their stop curves count every
-task of the thesis task table (a query without rows as never stopped), as the thesis did. The
-reduction differs from the thesis in its thresholds (every emitted probability and `>=` instead of
-201 quantiles and `>`), so the steps saved can differ by a few steps from the thesis sidecars.
+task of the thesis task table (a query without rows as never stopped). The reduction uses every
+emitted probability as a threshold with `>=`.
 
 The imported optplay aggregates were written before the last optimization runs (no ESBO-T-TabPFN
 rows, some cells on 43-50 instances). `optplay_reference` is the old `J_best` over every cell on

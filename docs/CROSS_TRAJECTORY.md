@@ -142,10 +142,7 @@ count includes the padding of the packed rows).
 ## Thesis checkpoints
 
 The XDecPFN and FT-PFN weights behind the thesis results were trained with an earlier
-implementation that differs from the models above in a few places: MLP embeddings of time and
-value (FT-PFN) and of the controller (XDecPFN), a readout skip connection, an extra token at the
-last observed step of every trajectory, a different time scaling, the boiler stride 10 instead
-of 11 and the crash atom as the first logit. They are imported unchanged as `variant=thesis`
+implementation. They are imported unchanged as `variant=thesis`
 models and served by small legacy classes that reproduce the old forward pass
 (`predictors/xdecpfn/legacy.py`, `predictors/ftpfn/legacy.py`, strict state-dict loading):
 

@@ -1,7 +1,7 @@
 # hero_3d
 
 ## What is shown
-- axes t (seconds), J_t (raw cost), theta (one controller coordinate); blue lines = real rig trials, orange fills = predicted total cost mu +- sigma and mu +- 2 sigma at t = T, star = next controller (argmax PI over the slice), red graph above the wall = predicted crash probability, dotted drop lines = trials shown stopped early
+- axes t (seconds), J_t (raw cost), theta (one controller coordinate); blue lines = real rig trials, orange fills = predicted total cost mu +- sigma and mu +- 2 sigma at t = T, star = next controller (argmax PI over the slice), red graph above the wall = predicted crash probability, dotted drop lines and red rings = trials shown stopped early
 
 ## Metric
 - mean and standard deviation of the predicted bar distribution without the crash atom, PI = P(J_T < incumbent J) with the crash atom counted as no improvement

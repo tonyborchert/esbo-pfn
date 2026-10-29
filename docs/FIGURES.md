@@ -130,12 +130,17 @@ Notes on the hardware figures:
 
 ## README art (`readme`, `src/esbopfn/plots/readme_art.py`)
 
-The README images live in `assets/`, each as PNG at twice the screen resolution and as SVG, a
-light (`<name>.png`) and a dark (`<name>_dark.png`) variant, and a sidecar `<name>.md`:
+The README images live in `assets/`, each as SVG and as PNG at twice the screen resolution (the
+demo as an animated GIF), a light (`<name>.*`) and a dark (`<name>_dark.*`) variant, and a sidecar
+`<name>.md`. They share one GitHub-like look: the system sans-serif font (Helvetica on macOS),
+GitHub's Primer colors on GitHub's page backgrounds, blue for measured cost trajectories, orange
+for forecasts, red for crashes, stops and forecasts above the best so far, green for a new best.
 
 | Image | Content | Inputs |
 |---|---|---|
 | `hero_3d` | 3D view over `t`, `J_t` and one controller coordinate `theta`: three real rig trials (BO on the rig without weight, seed 4 trial 25 complete, seed 1 trial 12 and seed 0 trial 3 shown stopped early with dotted drop lines) as the only lines, the predicted total cost at `t = T` of the thesis Furuta XDecPFN along a 1-D slice (nested fills mu +- sigma and mu +- 2 sigma), a star at the next controller (argmax of the probability of improvement over the slice) and the predicted crash probability as a flat red graph above the back wall | `hardware_optimization` units, checkpoint `xdecpfn/furuta/thesis/default` (`predict_unrun`) |
+| `stop_demo` (GIF) | three logged trials of one rig run (BO on the rig without weight, seed 0, trials 9, 11 and 19, a run without early stopping, so every trial is logged in full) replayed through the thesis Furuta XDecPFN: the pendulum drawn from the logged angles, the cost so far against the best final cost so far, the forecast density of the final cost, `Pr[J_T >= best so far]` against the stop level and the crash probability. The `exceed` and `naive` rules of `xdecpfn-pi` (`tau = 0.99`) are applied at its decision steps, after a stop the rest of the logged trial is revealed | `hardware_optimization` units, checkpoint `xdecpfn/furuta/thesis/default` (`predict`) |
+| `rig_progress` | median log10 regret over reset-normalized wall-clock per rig configuration, XDecPFN-PI in blue, the other methods in gray | `hardware_optimization` |
 | `problems_strip` | one set of cost trajectories per problem (random controllers on the nominal plant, crashes marked) | live rollouts |
 | `results_cards` | headline numbers: pooled prediction score at 64 context trials, simulation regret at 100 % time, hardware regret and crash counts | `thesis_series` (variant `thesis`), `hardware_optimization` |
 
@@ -143,7 +148,10 @@ The slice of `hero_3d` runs along the box dimension in which the predicted mean 
 the other coordinates at the incumbent of the context (the three shown trials plus six more trials
 of the seed 4 run), every trial sits at its own coordinate on that dimension. The view (`HERO_VIEW`,
 `HERO_BOX`) follows the wall view of the presentation slide. Every number on the cards comes from
-the database, a missing unit leaves its row out and is listed in the sidecar.
+the database, a missing unit leaves its row out and is listed in the sidecar. The demo shows the
+forecast density smoothed for display (`DENSITY_SMOOTH`), its sidecar lists the stop step, the
+probability at the stop and the logged outcome of every shown trial. Rendering everything takes
+about two minutes on a laptop CPU.
 
 Pipeline (the inputs come from the imports of [BENCHMARKS.md](BENCHMARKS.md#importing-the-thesis-results)
 and [HARDWARE.md](HARDWARE.md#importing-the-thesis-logs)):
@@ -152,7 +160,7 @@ and [HARDWARE.md](HARDWARE.md#importing-the-thesis-logs)):
 pfn hw import-logs <thesis project>/impl/prediction/hwplay/runs_holdcost5_newbox_reset_fixed
 pfn import thesis-results --from <thesis project>      # the thesis series of the result cards
 pfn import thesis-models --from <checkpoint dir>       # the XDecPFN checkpoint of hero_3d
-python -m esbopfn.plots.readme_art assets              # writes assets/*.png|svg|md
+python -m esbopfn.plots.readme_art assets              # writes assets/*.png|svg|gif|md
 pfn plot readme --out /tmp/art                         # the same into /tmp/art/readme/
 ```
 

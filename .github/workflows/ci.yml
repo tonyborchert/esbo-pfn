@@ -1,0 +1,121 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    # explicit bash runs with -eo pipefail, so `pytest ... | tee` fails when pytest fails
+    shell: bash
+
+env:
+  FORCE_COLOR: "1"
+  PYTHONUNBUFFERED: "1"
+  RUFF_VERSION: "0.14.0"
+
+jobs:
+  lint:
+    name: lint (ruff)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: pyproject.toml
+      # the modules are hand-wrapped (docs/CONTRIBUTING.md), so only `ruff check` is enforced
+      - name: ruff check
+        run: uvx "ruff@${RUFF_VERSION}" check --output-format=github .
+      - name: uv.lock matches pyproject.toml
+        run: uv lock --check
+
+  docs:
+    name: docs (relative links)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Check relative links in README.md and docs/
+        run: uv run --no-project --python 3.12 python tools/check_links.py
+
+  unit:
+    name: unit (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        # macos-latest is the arm64 runner (Accelerate, MPS-capable torch wheel)
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-env
+      - name: Fresh PFN_HOME
+        run: echo "PFN_HOME=$RUNNER_TEMP/pfn_home" >> "$GITHUB_ENV"
+      # cpp, gpu, slurm and hardware tests skip themselves (no binaries, no device, no sbatch, no rig)
+      - name: pytest
+        run: >
+          uv run --no-sync pytest -q -p no:cacheprovider
+          --junitxml=reports/unit-${{ matrix.os }}.xml
+      - name: Job summary
+        if: always()
+        run: uv run --no-sync python tools/junit_summary.py "unit (${{ matrix.os }})" reports/unit-${{ matrix.os }}.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: junit-unit-${{ matrix.os }}
+          path: reports/
+          if-no-files-found: warn
+
+  cpp:
+    name: cpp (generators, OpenBLAS)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CMAKE_GENERATOR: Ninja
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install the C++ toolchain
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends libopenblas-dev cmake ninja-build
+      - uses: ./.github/actions/setup-env
+      - name: Fresh PFN_HOME
+        run: |
+          echo "PFN_HOME=$RUNNER_TEMP/pfn_home" >> "$GITHUB_ENV"
+          mkdir -p reports
+      - name: Restore the C++ build directory
+        uses: actions/cache@v4
+        with:
+          path: cpp/build-openblas
+          key: cpp-build-${{ runner.os }}-openblas-${{ hashFiles('cpp/**', '!cpp/build*/**') }}
+          restore-keys: cpp-build-${{ runner.os }}-openblas-
+      # configures cpp/build-openblas and installs the binaries into $PFN_HOME/bin
+      - name: pfn data build --blas openblas
+        run: uv run --no-sync pfn data build --blas openblas 2>&1 | tee reports/cpp-build.log
+      - name: Generator tests and C++/Python parity
+        run: >
+          uv run --no-sync pytest -q -p no:cacheprovider --run-cpp
+          tests/cpp tests/unit/test_ftpfn.py tests/unit/test_xdecpfn.py
+          --junitxml=reports/cpp.xml 2>&1 | tee reports/cpp-tests.log
+      - name: Job summary
+        if: always()
+        run: uv run --no-sync python tools/junit_summary.py "cpp (generators, OpenBLAS)" reports/cpp.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: junit-cpp
+          path: reports/
+          if-no-files-found: warn

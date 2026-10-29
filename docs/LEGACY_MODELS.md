@@ -119,19 +119,19 @@ skip when the export directory is absent.
 ## 4. Differences to the models of this package
 
 The legacy models follow the old code. The DecPFN and LC-PFN of this package follow the thesis
-text, with the remaining choices listed in [DEVIATIONS.md](DEVIATIONS.md).
+text.
 
 | item | legacy (old code) | this package | reference |
 |---|---|---|---|
-| DecPFN covariates | `[y, Y, j, J]`, `Y` includes extra channels (Boiler heater command, Cartpole action and goal-relative position, Furuta constant target), Furuta treats the velocities as levels with summed increments | `[ΔJ, ξ, Σξ̇]` plus `J` on the thesis channels | [DEVIATIONS.md](DEVIATIONS.md#problems-and-priors-datamd-srcesbopfnproblemsreadmemd) "State channels" |
-| DecPFN tokens | 0-based steps `0, s, 2s, ... < T - 1`, the first token covers one step, `N_grid` tokens (Cartpole 67) | `t_l = l·s`, `l = 1..N_grid − 1` | [DEVIATIONS.md](DEVIATIONS.md#problems-and-priors-datamd-srcesbopfnproblemsreadmemd) "Grids" |
+| DecPFN covariates | `[y, Y, j, J]`, `Y` includes extra channels (Boiler heater command, Cartpole action and goal-relative position, Furuta constant target), Furuta treats the velocities as levels with summed increments | `[ΔJ, ξ, Σξ̇]` plus `J` on the thesis channels | [`problems/README.md`](../src/esbopfn/problems/README.md) |
+| DecPFN tokens | 0-based steps `0, s, 2s, ... < T - 1`, the first token covers one step, `N_grid` tokens (Cartpole 67) | `t_l = l·s`, `l = 1..N_grid − 1` | [TRAINING.md](TRAINING.md#the-thesis-recipe) |
 | Boiler stride | 10 (71 grid points) | 11 | same |
 | Time input | standardized token index `linspace(−√3, √3, L − 1)` (DecPFN), `index/(L − 1)` standardized as uniform (LC-PFN) | `t` z-scored over its range | [TRAINING.md](TRAINING.md#calibjson) |
-| LC-PFN grid | `linspace(0, T − 1, L)`, `N_grid + 1` points including the first step | `t_l = ⌊l T / N⌋`, `l = 1..N` | [DEVIATIONS.md](DEVIATIONS.md#problems-and-priors-datamd-srcesbopfnproblemsreadmemd) "Grids" |
-| LC-PFN cost input | clipped to `[0, cap]`, mapped to `[0.02, 1]`, then the equal-width CDF of the calibration values (`-linearnorm`) or a z-score (`_zscore` leaves) | z-score from prior samples | [DEVIATIONS.md](DEVIATIONS.md#predictors-and-training-trainingmd-cross_trajectorymd) |
+| LC-PFN grid | `linspace(0, T − 1, L)`, `N_grid + 1` points including the first step | `t_l = ⌊l T / N⌋`, `l = 1..N` | [TRAINING.md](TRAINING.md#the-thesis-recipe) |
+| LC-PFN cost input | clipped to `[0, cap]`, mapped to `[0.02, 1]`, then the equal-width CDF of the calibration values (`-linearnorm`) or a z-score (`_zscore` leaves) | z-score from prior samples | [TRAINING.md](TRAINING.md#calibjson) |
 | LC-PFN crashed rows | kept in the loss (trained before crash masking existed, `mask_crashed` absent) | removed from the batch | [TRAINING.md](TRAINING.md#the-thesis-recipe) |
-| Training size | 10 or 100 epochs of 10,240 rows (102,400 or 1,024,000), 800 or 8,000 steps | exactly 100,000 or 1,000,000 rows | [DEVIATIONS.md](DEVIATIONS.md#deviations-from-the-thesis-text) D3 |
+| Training size | 10 or 100 epochs of 10,240 rows (102,400 or 1,024,000), 800 or 8,000 steps | exactly 100,000 or 1,000,000 rows | [TRAINING.md](TRAINING.md#the-thesis-recipe) |
 | Schedule and precision | DecPFN warmup from 0.01·lr and cosine to 1e-6 per step, LC-PFN per-epoch steps and fp16 autocast | warmup from 0, cosine to 0 per step, bf16 | [TRAINING.md](TRAINING.md#the-thesis-recipe) |
-| Statistics | one 10,000-row batch of the training pool | 20,000 rows, up to 100,000 horizon values | [DEVIATIONS.md](DEVIATIONS.md#predictors-and-training-trainingmd-cross_trajectorymd) "Calibration sample sizes" |
+| Statistics | one 10,000-row batch of the training pool | 20,000 rows, up to 100,000 horizon values | [TRAINING.md](TRAINING.md#calibjson) |
 | Seeds | none (time-seeded pools, unseeded initialization) | every draw seeded | [TRAINING.md](TRAINING.md) |
-| Prior | old priors (single-channel problems without the per-channel jitter, rejection-truncated `p̂`) | thesis prior | [DEVIATIONS.md](DEVIATIONS.md#problems-and-priors-datamd-srcesbopfnproblemsreadmemd) "Sensor noise", "Parameter estimate" |
+| Prior | old priors (single-channel problems without the per-channel jitter, rejection-truncated `p̂`) | thesis prior | [DATA.md](DATA.md#the-priors-as-implemented) |

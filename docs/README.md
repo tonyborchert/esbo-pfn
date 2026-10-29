@@ -1,7 +1,6 @@
 # Documentation
 
-Start with [REPRODUCE.md](REPRODUCE.md) to run the pipeline end to end, and with
-[DEVIATIONS.md](DEVIATIONS.md) to see where the code makes its own choices against the thesis text.
+Start with [REPRODUCE.md](REPRODUCE.md) to run the pipeline end to end.
 
 | Doc | What it covers |
 |---|---|
@@ -16,7 +15,6 @@ Start with [REPRODUCE.md](REPRODUCE.md) to run the pipeline end to end, and with
 | [HARDWARE.md](HARDWARE.md) | the QUBE-Servo 2 rig: workstation setup, protocol, reset, rig field, prediction benchmark, importing the rig logs |
 | [FIGURES.md](FIGURES.md) | every plot group and figure, what renders from the thesis import, the README art and `assets/figures/` |
 | [CLUSTER.md](CLUSTER.md) | `PFN_HOME` and `PFN_PROFILE`, cluster profiles, `pfn submit`, adding a cluster |
-| [DEVIATIONS.md](DEVIATIONS.md) | the deviations from the thesis text and every specification choice, with thesis references |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | setup, code conventions, extension points, tests |
 
 The problems and the universal prior are documented next to their code in

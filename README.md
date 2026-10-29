@@ -1,5 +1,9 @@
 # esbo-pfn
 
+[![CI](https://github.com/tonyborchert/esbo-pfn/actions/workflows/ci.yml/badge.svg)](https://github.com/tonyborchert/esbo-pfn/actions/workflows/ci.yml)
+[![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](pyproject.toml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 Early stopping Bayesian optimization for controller tuning with prior-fitted networks (PFNs). A
 controller trial produces a cumulative cost trajectory `J_t` and a state trajectory. The PFNs in
 this repository read the running trial (and, for the cross-trajectory models, every earlier trial

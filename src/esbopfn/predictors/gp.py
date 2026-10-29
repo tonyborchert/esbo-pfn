@@ -8,11 +8,11 @@ and outputs are standardized before the fit. Hyperparameters maximize the log ma
 (plus GPML's smooth-box length-scale prior when no per-point noise is known) with Adam, and are
 clamped into their bounds after every step. The fit uses no randomness.
 
-``cold_refit_growth`` (a documented deviation, see ``docs/DEVIATIONS.md``) rations full fits: a GP
-instance is one chain of fits on a growing training set. A fit is cold (fixed initialization, all
-``iters`` steps) unless the previous fit exists and the training set has grown by less than
-``cold_refit_growth`` relative to the size at the last cold fit, in which case it starts from the
-previous hyperparameters and runs ``round(0.15 * iters)`` steps. ``0.0`` makes every fit cold.
+``cold_refit_growth`` rations full fits: a GP instance is one chain of fits on a growing training
+set. A fit is cold (fixed initialization, all ``iters`` steps) unless the previous fit exists and
+the training set has grown by less than ``cold_refit_growth`` relative to the size at the last cold
+fit, in which case it starts from the previous hyperparameters and runs ``round(0.15 * iters)``
+steps. ``0.0`` makes every fit cold.
 """
 
 from __future__ import annotations

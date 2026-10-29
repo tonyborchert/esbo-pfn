@@ -1,0 +1,40 @@
+name: Set up the Python environment
+description: >
+  uv with its cache, Python 3.12 and the locked environment (`uv sync --frozen`). On Linux the
+  locked torch is the PyPI build with the CUDA libraries, so the job skips torch and its CUDA
+  packages and installs the CPU wheel of the same version from the PyTorch index instead.
+  pyproject.toml and uv.lock are untouched, so `uv sync --frozen` elsewhere installs the lock as is.
+  Run later steps with `uv run --no-sync`.
+
+runs:
+  using: composite
+  steps:
+    - uses: astral-sh/setup-uv@v6
+      with:
+        enable-cache: true
+        cache-dependency-glob: uv.lock
+        cache-suffix: ${{ runner.os }}-${{ runner.arch }}
+
+    - name: Install Python 3.12
+      shell: bash
+      run: uv python install 3.12
+
+    - name: Sync the locked environment (CPU torch on Linux)
+      shell: bash
+      run: |
+        if [ "$RUNNER_OS" != "Linux" ]; then
+          uv sync --frozen
+          exit 0
+        fi
+        # torch and every CUDA package of the lock (only torch depends on them), plus the version
+        read -r TORCH_VERSION SKIP < <(uv run --no-project --python 3.12 python - <<'PY'
+        import tomllib
+        pkgs = tomllib.load(open("uv.lock", "rb"))["package"]
+        torch = next(p["version"] for p in pkgs if p["name"] == "torch")
+        gpu = [p["name"] for p in pkgs if p["name"].startswith(("nvidia-", "cuda-", "triton"))]
+        print(torch, " ".join(f"--no-install-package {n}" for n in ["torch", *gpu]))
+        PY
+        )
+        uv sync --frozen $SKIP
+        uv pip install --no-deps --index-url https://download.pytorch.org/whl/cpu "torch==${TORCH_VERSION}+cpu"
+        uv run --no-sync python -c "import torch; print('torch', torch.__version__, 'cuda', torch.version.cuda)"

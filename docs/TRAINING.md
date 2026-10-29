@@ -106,7 +106,7 @@ predictions are mapped back to raw cost units.
 
 **Optimization** (`training/common.py`). AdamW, linear warmup from 0 over the first 25 % of the
 steps, then cosine decay to 0, stepped per optimizer step, gradient norm clipped to 1 (XDecPFN and
-FT-PFN do not clip, deviation D1 in [DEVIATIONS.md](DEVIATIONS.md)), batch 128,
+FT-PFN do not clip), batch 128,
 bf16 autocast on CUDA. Seeds: the parameter initialization draws from `(seed, "init")`, dropout
 from `(seed, "train")`, the data order from `(seed, "shuffle", pass)` and the LC-PFN cutoffs from
 `(seed, "cutoff")`, all through `esbopfn.util.seeds`.

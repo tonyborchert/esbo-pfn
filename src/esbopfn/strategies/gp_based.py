@@ -28,7 +28,7 @@ from esbopfn.strategies.base import Strategy, incumbent_index, j_plus, sample_un
 
 #: Size of the random candidate set of the GP acquisition (setup, ESRS/BO/Oracle paragraph).
 N_CANDIDATES = 2000
-#: Default ``cold_refit_growth`` of the optimization runs (docs/DEVIATIONS.md).
+#: Default ``cold_refit_growth`` of the optimization runs (docs/PREDICTORS.md).
 COLD_REFIT_GROWTH = 0.05
 
 

@@ -107,9 +107,8 @@ A port of the GP used by the original MATLAB ESBO code, in PyTorch (float64, CPU
 
 Hyperparameters are clamped into their bounds after every step. The fit draws no random numbers.
 
-`cold_refit_growth` is a documented deviation (D2 in [DEVIATIONS.md](DEVIATIONS.md)). An `ExactGP` instance
-is one chain of fits. A fit is cold (fixed initialization, 100 steps) unless a previous fit exists
-and the training set has fewer than `(1 + cold_refit_growth)` times the rows of the last cold fit.
+`cold_refit_growth` rations full fits. An `ExactGP` instance is one chain of fits. A fit is cold
+(fixed initialization, 100 steps) unless a previous fit exists and the training set has fewer than `(1 + cold_refit_growth)` times the rows of the last cold fit.
 Then it starts from the previous hyperparameters and runs 15 % of the steps. `0.0` (the default)
 makes every fit cold. Optimization runs use `0.05`.
 

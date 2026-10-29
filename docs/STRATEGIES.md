@@ -141,4 +141,4 @@ the decoder grid token steps for both XDecPFN and FT-PFN (S:97-102).
   ties go to DecPFN.
 - `matched` conditions the incumbent prediction on `J ≥ J⁻_n` as a whole mixture (the literal
   conditioning event of the thesis equation).
-- `cold_refit_growth = 0.05` (deviation D2 in [DEVIATIONS.md](DEVIATIONS.md)).
+- `cold_refit_growth = 0.05` ([PREDICTORS.md](PREDICTORS.md#exact-gp-esbopfnpredictorsgp)).

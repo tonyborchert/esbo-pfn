@@ -1,5 +1,5 @@
 # FT-PFN hyperparameters (thesis Appendix, tab:app:ftpfn-xdecpfn-configs), fixed across all five
-# problems. No HPO. Gradient clipping is off for this model (docs/DEVIATIONS.md).
+# problems. No HPO. Gradient clipping is off for this model.
 model: ftpfn
 
 fixed:

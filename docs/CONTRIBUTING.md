@@ -49,3 +49,16 @@ Each of these is a new file, the registry code stays unchanged.
 
 Add tests under `tests/unit/` for pure Python code and under `tests/<marker>/` with the matching
 marker for code that needs a resource.
+
+### Continuous integration
+
+`.github/workflows/ci.yml` runs on every push to `main` and every pull request. `lint` runs
+`ruff check` (pinned version) and `uv lock --check`. `docs` checks the relative links and anchors of
+`README.md` and `docs/` with `tools/check_links.py`. `unit` runs the whole test suite on Ubuntu and
+macOS (arm64) with an empty `PFN_HOME`, so tests that need thesis imports, checkpoints or binaries
+skip. `cpp` builds the generators on Ubuntu with OpenBLAS (`pfn data build --blas openblas`) and
+runs `tests/cpp` with `--run-cpp` plus the unit tests that call `plants_gen`. On Linux the jobs
+install the CPU wheel of the locked torch version from the PyTorch index instead of the CUDA build,
+and `pyproject.toml` and `uv.lock` stay as they are. The `gpu`, `slurm` and `hardware` tests are
+opt-in markers and do not run in CI. JUnit reports and the C++ build and test logs are uploaded as
+artifacts, and each test job writes its counts to the job summary.

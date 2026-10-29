@@ -18,3 +18,5 @@ cpp/build*/
 cmake-build-*/
 # build planning notes (kept outside the repository)
 planning/
+# local notes, not published
+docs/DEVIATIONS.md

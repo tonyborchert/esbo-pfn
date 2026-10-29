@@ -20,7 +20,9 @@ the resource is found or when `--run-<marker>` is passed.
   `PFN_HOME` and `PFN_PROFILE`.
 - Every random draw takes an explicit `numpy.random.Generator` or torch generator derived with
   `esbopfn.util.seeds.substream(root_seed, *labels)`. No global RNG.
-- Small modules. Each own predictor has `model.py`, `data.py`, `train.py` and `predictor.py`.
+- Small modules. Each own predictor has `model.py`, `train.py` and `predictor.py`, plus `data.py`
+  where its data loader is its own (XDecPFN, FT-PFN). LC-PFN and DecPFN share
+  `training/single_trajectory_data.py`.
 - Steps are 1-based as in the thesis.
 - Docs and docstrings in American English, without semicolons, and "early stopping" without a
   hyphen.
@@ -34,7 +36,7 @@ Each of these is a new file, the registry code stays unchanged.
 | CLI command | `src/esbopfn/commands/<name>.py` | `register(subparsers)` |
 | benchmark kind | `src/esbopfn/benchmarks/kinds/<kind>.py` | `KIND = BenchmarkKind(...)` |
 | plot group | `src/esbopfn/plots/<group>.py` (+ `configs/benchmarks/<group>.yaml`) | `GROUP = PlotGroup(...)` |
-| cluster | `src/esbopfn/configs/cluster/<name>.yaml` | see `docs/CLUSTER.md` |
+| cluster | `src/esbopfn/configs/cluster/<name>.yaml` | see [CLUSTER.md](CLUSTER.md) |
 
 ## Tests
 

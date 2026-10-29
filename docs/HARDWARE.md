@@ -216,9 +216,9 @@ target_J, query_t, infer_s`, `n_ctx = -1` for the full history) and `summary.jso
 ## Importing the thesis logs
 
 ```bash
-pfn hw import-logs ../impl/prediction/hwplay/runs_holdcost5_newbox_reset_fixed
-pfn hw import-logs ../impl/prediction/hwplay/runs_holdcost5_newbox_reset_fixed_different_plant
-pfn hw import-pred ../impl/dynformer/experiments/hwpred/results
+pfn hw import-logs <thesis project>/impl/prediction/hwplay/runs_holdcost5_newbox_reset_fixed
+pfn hw import-logs <thesis project>/impl/prediction/hwplay/runs_holdcost5_newbox_reset_fixed_different_plant
+pfn hw import-pred <thesis project>/impl/dynformer/experiments/hwpred/results
 ```
 
 or from Python `import_rig_logs(root, rig_name=None, home=None)` and

@@ -3,7 +3,8 @@
 Code: `src/esbopfn/benchmarks/` (`db.py`, `instances.py`, `tasks.py`, `metrics.py`, `groups.py`,
 `import_thesis.py`, `import_timing.py`, `kinds/*.py`), specs in `src/esbopfn/configs/benchmarks/`.
 Thesis references: `S` = setup.tex, `SR` = sim_results.tex, `A` = appendix.tex (line numbers
-approximate). The hardware kinds are documented with the hardware stack.
+approximate). The hardware kinds are documented in [HARDWARE.md](HARDWARE.md), the figures in
+[FIGURES.md](FIGURES.md).
 
 ## Overview
 
@@ -174,7 +175,7 @@ Prediction (S:542-576, subsubsec:setup:prediction-metrics):
 | function | definition |
 |---|---|
 | `trial_scores(rows)` | per non-crashed query the mean of its cutoff LLs (five cutoffs) |
-| `collapse_context_blind(scores)` | DecPFN, DecPFN-noStates, LC-PFN pooled over `n` (`n_ctx = -1`) |
+| `collapse_context_blind(scores)` | DecPFN, DecPFN-no-St, LC-PFN pooled over `n` (`n_ctx = -1`) |
 | `median_scores(scores)` | median per (problem, model, n) |
 | `med_d(scores, participants)` | per problem the median of every score of the declared participants |
 | `ll_norm(scores, med)` | `score - med_D` of the problem |
@@ -215,10 +216,10 @@ depend on what else is in the database.
 | spec | figures | units |
 |---|---|---|
 | `priors` | fig:setup:prior-samples, fig:app:prior-landscapes | instances, landscapes (instances 0-2, slice seed 1, prior samples) |
-| `single_trajectory` | fig:sim:lcpfn-decpfn-heads, fig:sim:lcpfn-decpfn-stop-sheet | DecPFN, DecPFN-noStates, LC-PFN x {binned, gaussian, linear} x {100k, 1M} on `oracle65`, timing at `n = 0` |
+| `single_trajectory` | fig:sim:lcpfn-decpfn-heads, fig:sim:lcpfn-decpfn-stop-sheet | DecPFN, DecPFN-no-St, LC-PFN x {binned, gaussian, linear} x {100k, 1M} on `oracle65`, timing at `n = 0` |
 | `tabpfn` | fig:sim:tabpfn-panel | Trajectory-TabPFN L = 25/50/100/250 (n >= 2), Segment-TabPFN rate/split (n >= 4), plus the `prediction_summary` participants |
 | `cross_trajectory` | fig:sim:context-sweep, fig:sim:ftpfn-xdecpfn-stop-sheet | XDecPFN, FT-PFN on `oracle65` and the ladder (`oracle181`, PT2/Cartpole/Furuta) |
-| `prediction_summary` | fig:sim:fig3-cross, fig:app:fig3-sheet, fig:sim:fig2-sheet | DecPFN, LC-PFN, DecPFN-noStates (binned 1M), XDecPFN, FT-PFN, TabPFN L = 50, Segment-TabPFN split, Segment-GP, which are also the `participants` |
+| `prediction_summary` | fig:sim:fig3-cross, fig:app:fig3-sheet, fig:sim:fig2-sheet | DecPFN, LC-PFN, DecPFN-no-St (binned 1M), XDecPFN, FT-PFN, TabPFN L = 50, Segment-TabPFN split, Segment-GP, which are also the `participants` |
 | `optimization` | fig:sim:optplay-cross, -violin-cross-full, -crashes, -timing and the appendix sheets and variant violins | the nine thesis strategies, the six DecPFN/DecPFN-H threshold cells, the six further pure-loop cells, 5 problems x instances 0-19, timing with seven strategies on instances 0-2 |
 | `generation_speed` | tab:app:prior-cost | one unit per problem |
 
@@ -259,7 +260,7 @@ workstation, `optimization_timing` with one CPU per task) should run where their
 
 ```
 pfn import thesis-results --from /path/to/bachelorarbeit [--raw DIR] [--overwrite]
-pfn import thesis-models --from DIR                      # XDecPFN and FT-PFN checkpoints
+pfn import thesis-models --from DIR                      # thesis checkpoints
 ```
 
 `import_thesis_results(root)` reads every result file below the `bachelorarbeit` root that exists,
@@ -285,7 +286,7 @@ phi_NNNN/runs/<cell>.json`. Units carry `provenance: "thesis"` and the thesis na
 TabPFN `ls`/`diff` encodings, `stengertpfn/modeminimal`, the retired recipe arms and the plain
 `furuta_lqr` problem are not imported.
 
-What the local files give (`pfn import thesis-results`, 2026-10-29): `instances` 5,
+A full import of the thesis project as of 2026-10-29 gives `instances` 5,
 `prediction_ladder` 7, `prediction_timing` 382, task tables 5, `thesis_series` 898. Raw optplay
 runs and raw predplay predictions are cluster-only and are imported by the same command once
 copied (`--raw`).
@@ -303,7 +304,10 @@ copied (`--raw`).
 | `..._runs.json`, `..._crashes.json` | `optplay_runs` (per-run summaries), `optplay_crashes` (mean crash count on a 200-point time grid) |
 | `<p>@g0.05@bcapped[@timing]/phi_NNNN/runs/<cell>.json` (cluster) | `optimization` / `optimization_timing` with the full `RunRecord` |
 
-### Which figures the local imports rebuild
+### Which import serves which figure
+
+The figure catalog in [FIGURES.md](FIGURES.md#catalog) says which figures render from the import
+alone. The series behind them:
 
 | figure | from |
 |---|---|
@@ -311,7 +315,7 @@ copied (`--raw`).
 | fig:sim:fig3-cross, fig:app:fig3-sheet, fig:sim:tabpfn-panel | aggregates (`fig3_cross`, `fig3_per_problem` variant `thesis`) with raw timing records |
 | fig:sim:lcpfn-decpfn-heads | aggregates (`fig3_per_problem` holds every head and size per problem) |
 | fig:sim:ftpfn-xdecpfn-stop-sheet | aggregates (`fig2_stop_curves`) |
-| fig:sim:fig2-sheet | aggregates, except the DecPFN-noStates curve (cluster predictions) |
+| fig:sim:fig2-sheet | aggregates, except the DecPFN-no-St curve (cluster predictions) |
 | fig:sim:lcpfn-decpfn-stop-sheet | not locally (only DecPFN and LC-PFN 1M binned curves are in `fig2_*.csv`) |
 | fig:sim:optplay-crashes | aggregates (`optplay_crashes`) |
 | fig:sim:optplay-violin-cross-full, fig:app:optplay-violin-sheet and the two appendix variant violins | aggregates at 100 % only (`optplay_finals`), the 50 % points need the raw runs |
@@ -319,7 +323,7 @@ copied (`--raw`).
 | fig:sim:optplay-timing | not locally (the one-thread timing tree is cluster-only, `optplay_campaign_timing` holds contended campaign times) |
 | fig:setup:prior-samples, fig:app:prior-landscapes, tab:app:prior-cost | native units (`priors`, `generation_speed`) |
 
-The local optplay aggregates were written before the last optimization runs (no ESBO-T-TabPFN
+The imported optplay aggregates were written before the last optimization runs (no ESBO-T-TabPFN
 rows, some cells on 43-50 instances). `optplay_reference` is the old `J_best` over every cell on
 disk. A plot built from the imported finals should recompute `J_best` over its declared set.
 

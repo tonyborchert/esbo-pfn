@@ -113,8 +113,8 @@ A dataset lives in `$PFN_HOME/datasets/<problem>/<kind>/<name>/`.
 | `sets/<p>/xdecpfn_heldout` | 256 instances | 2002 | 32 | held-out XDecPFN pools |
 | `contexts/<p>/ftpfn` | 3,500,000 examples | 3001 | 2,000 | FT-PFN examples, a fresh trajectory set each |
 | `contexts/<p>/ftpfn_heldout` | 2,000 examples | 3002 | 500 | held-out FT-PFN examples |
-| `fields/<p>/oracle65` | | | | ESBO-Oracle runs for the prediction benchmark, written by the benchmark phase |
-| `fields/<p>/oracle181` | | | | ESBO-Oracle runs for the context ladder, written by the benchmark phase |
+| `fields/<p>/oracle65` | | | | ESBO-Oracle runs for the prediction benchmark, stored as `fields` benchmark units by `pfn bench run` ([BENCHMARKS.md](BENCHMARKS.md)) |
+| `fields/<p>/oracle181` | | | | ESBO-Oracle runs for the context ladder, stored the same way |
 
 A prefix dataset (`100k`, `val_lcpfn`) owns no directory. Generating it generates the first chunks
 of its parent, and `open_dataset` returns the parent pool limited to the prefix. The chunk sizes

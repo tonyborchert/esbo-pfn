@@ -16,7 +16,7 @@ def register(subparsers: argparse._SubParsersAction) -> None:
                    help="directory holding raw optplay trees <problem>@g0.05@bcapped[@timing]/")
     r.add_argument("--overwrite", action="store_true", help="replace units already imported")
     r.set_defaults(func=run_results)
-    m = sub.add_parser("thesis-models", help="thesis XDecPFN and FT-PFN checkpoints")
+    m = sub.add_parser("thesis-models", help="thesis checkpoints (XDecPFN, FT-PFN, DecPFN and LC-PFN export)")
     m.add_argument("--from", dest="dirs", required=True, action="append", type=Path,
                    help="directory with the checkpoints, repeatable")
     m.add_argument("--problem", action="append", default=None)

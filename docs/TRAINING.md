@@ -3,7 +3,8 @@
 This page covers the training of the own single-trajectory models LC-PFN and DecPFN (and their
 variants), the shared training core every own model uses, the model tree under
 `$PFN_HOME/models/`, the hyperparameter files and the LC-PFN/DecPFN hyperparameter search.
-XDecPFN and FT-PFN train on the same core with their own data loaders (see their modules).
+XDecPFN and FT-PFN train on the same core with their own data loaders
+([CROSS_TRAJECTORY.md](CROSS_TRAJECTORY.md)).
 
 ## Quick start
 
@@ -20,11 +21,11 @@ pfn models show decpfn/cartpole/binned/1M
 `pfn train <model> --problem P [--head binned|gaussian|linear|all] [--size 100k|1M|all]
 [--hparams FILE] [--seed S] [--run R] [--steps N] [--time-limit S] [--device auto|cuda|mps|cpu]`.
 Models: `lcpfn`, `lcpfn-last`, `decpfn`, `decpfn-nostates`, `decpfn-nodeadtime` and
-`decpfn-nodeadtime-nostates` (Furuta only), plus the models other packages register (`xdecpfn`, `ftpfn`). Head and size default to `binned`
-and `1M`. `--steps` overrides the step count (debugging and smoke runs, a count beyond one pass
+`decpfn-nodeadtime-nostates` (Furuta only), and `xdecpfn`, `ftpfn` (see
+[CROSS_TRAJECTORY.md](CROSS_TRAJECTORY.md)). Head and size default to `binned` and `1M`. `--steps` overrides the step count (debugging and smoke runs, a count beyond one pass
 over the data starts a fresh seeded pass), `--time-limit` caps the training time. A finished model
 directory is never retrained, an unfinished one resumes from its checkpoint. On a cluster, wrap the
-command in `pfn submit --kind train -- pfn train ...` (see `docs/CLUSTER.md`).
+command in `pfn submit --kind train -- pfn train ...` (see [CLUSTER.md](CLUSTER.md)).
 
 ## Model ids and the model tree
 
@@ -101,7 +102,8 @@ The targets of all heads live in the space of the z-scored `J` channel, at infer
 predictions are mapped back to raw cost units.
 
 **Optimization** (`training/common.py`). AdamW, linear warmup from 0 over the first 25 % of the
-steps, then cosine decay to 0, stepped per optimizer step, gradient norm clipped to 1, batch 128,
+steps, then cosine decay to 0, stepped per optimizer step, gradient norm clipped to 1 (XDecPFN and
+FT-PFN do not clip, deviation D1 in [DEVIATIONS.md](DEVIATIONS.md)), batch 128,
 bf16 autocast on CUDA. Seeds: the parameter initialization draws from `(seed, "init")`, dropout
 from `(seed, "train")`, the data order from `(seed, "shuffle", pass)` and the LC-PFN cutoffs from
 `(seed, "cutoff")`, all through `esbopfn.util.seeds`.

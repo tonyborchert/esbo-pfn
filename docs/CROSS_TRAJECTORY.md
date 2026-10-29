@@ -66,7 +66,7 @@ token with probability `p` at a token uniform over its grid tokens, and `N_unrun
 queries from the instance's 128 label trials. The cut trajectories (predicted at the horizon) and
 the unrun queries enter the loss. The cross stage runs on the examples sorted by size in chunks of
 256, padded to the chunk's longest example. Optimizer: AdamW, learning rate `1e-3`, weight decay
-0, 25 % linear warmup and cosine decay to 0, bf16 autocast on CUDA, no gradient clipping, 16,550
+0, 25 % linear warmup and cosine decay to 0, bf16 autocast on CUDA, no gradient clipping (deviation D1 in [DEVIATIONS.md](DEVIATIONS.md)), 16,550
 steps (132,400 instances, one pass) on every problem.
 
 **Inference.** A completed trial enters with all its tokens and `e_complete`, a crashed one with
@@ -157,7 +157,7 @@ get_predictor("ftpfn/boiler/thesis/default", "boiler")
 ```
 
 `import_thesis(from_dir, *extra_dirs, home=None, problems=None, overwrite=False)` (the function
-behind `pfn models import-thesis --from DIR`) looks for `[checkpoints/]fr2/<p>/final.pt`,
+behind `pfn import thesis-models --from DIR`) looks for `[checkpoints/]fr2/<p>/final.pt`,
 `[checkpoints/]c1r2_qloop/<p>/f_*_seg*_final.pt`, `[checkpoints/]c1r2_calib/qloop/calib_c1r2_<key>_lnJ.json`
 and checkpoints or calibrations lying directly in a directory, keeps the finished checkpoint with
 the most steps per model and problem and writes `xdecpfn/<p>/thesis/default` and

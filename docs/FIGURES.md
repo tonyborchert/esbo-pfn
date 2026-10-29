@@ -70,7 +70,7 @@ benchmark. "Units" are the benchmark kinds the figure reads.
 |---|---|---|---|
 | fig:sim:fig3-cross | `fig3_cross` | `prediction`, `prediction_timing`, `thesis_series` | yes |
 | fig:app:fig3-sheet | `fig3_sheet` | same | yes |
-| fig:sim:fig2-sheet | `fig2_sheet` | `prediction`, `thesis_series` | yes (without the noStates curve) |
+| fig:sim:fig2-sheet | `fig2_sheet` | `prediction`, `thesis_series` | yes (without the DecPFN-no-St curve) |
 
 ### Optimization (`optimization`)
 
@@ -89,7 +89,8 @@ benchmark. "Units" are the benchmark kinds the figure reads.
 
 | Thesis table | Name | Units | Local |
 |---|---|---|---|
-| tab:app:prior-cost | `generation_speed` | `generation_speed` (C++ binaries) | after `pfn data build` |
+| tab:app:prior-cost | `prior_cost_table` (`.md` and `.tex`) | `generation_speed` (C++ binaries) | after `pfn data build` and `pfn bench run generation_speed` |
+| tab:setup:model-cost | `model_cost_table` (`.md` and `.tex`) | the model tree (`metrics.json`, `model.pt`) | for the models present, imported or trained |
 
 ### Hardware (`hardware`, `src/esbopfn/plots/hardware.py`)
 
@@ -142,12 +143,30 @@ of the seed 4 run), every trial sits at its own coordinate on that dimension. Th
 `HERO_BOX`) follows the wall view of the presentation slide. Every number on the cards comes from
 the database, a missing unit leaves its row out and is listed in the sidecar.
 
-Pipeline:
+Pipeline (the inputs come from the imports of [BENCHMARKS.md](BENCHMARKS.md#importing-the-thesis-results)
+and [HARDWARE.md](HARDWARE.md#importing-the-thesis-logs)):
 
 ```bash
-pfn hw import-logs <impl>/prediction/hwplay/runs_holdcost5_newbox_reset_fixed   # rig logs
-pfn import thesis-results --help        # the thesis series of the result cards
-pfn import thesis-models --help         # the XDecPFN checkpoint of hero_3d
-python -m esbopfn.plots.readme_art assets                  # writes assets/*.png|svg|md
-pfn plot readme --out /tmp/art                             # the same into /tmp/art/readme/
+pfn hw import-logs <thesis project>/impl/prediction/hwplay/runs_holdcost5_newbox_reset_fixed
+pfn import thesis-results --from <thesis project>      # the thesis series of the result cards
+pfn import thesis-models --from <checkpoint dir>       # the XDecPFN checkpoint of hero_3d
+python -m esbopfn.plots.readme_art assets              # writes assets/*.png|svg|md
+pfn plot readme --out /tmp/art                         # the same into /tmp/art/readme/
 ```
+
+## Rendered figures in `assets/figures/`
+
+The README embeds PNG renders of the figure groups that draw from the thesis import, each with its
+sidecar, and the method schematics of the thesis converted to PNG:
+
+```bash
+pfn plot prediction_summary optimization hardware --format png --out assets/figures
+pfn plot cross_trajectory --format png      # then copy the PNGs and sidecars, not _cache/
+pdftoppm -png -r 150 -singlefile <thesis>/assets/xdecpfn_training.pdf assets/figures/schematics/xdecpfn_training
+```
+
+`cross_trajectory` caches its live inference under `<out>/cross_trajectory/_cache/`, which is why it
+renders into `$PFN_HOME/figures` first. The sidecars hold `$PFN_HOME` in place of local paths. Only
+figures that render from data in the database are kept there. The groups list the figures
+they skip and why in `skipped.txt` next to the rendered ones (for example the optimization curves,
+which need per-run records).

@@ -4,7 +4,8 @@
 ``decpfn/<problem>/<head>/<size>[/<run>]`` and the same for ``decpfn-nostates``,
 ``decpfn-nodeadtime`` and ``decpfn-nodeadtime-nostates`` (factories
 :func:`make_nostates_predictor`, :func:`make_nodeadtime_predictor` and
-:func:`make_nodeadtime_nostates_predictor`).
+:func:`make_nodeadtime_nostates_predictor`). Variants starting with ``thesis`` are the imported
+thesis checkpoints (:mod:`esbopfn.predictors.decpfn.legacy`).
 Importing this package does not import torch.
 """
 
@@ -23,6 +24,10 @@ def _make(family: str, args: tuple[str, ...], spec: ProblemSpec, **kw: Any):
                          f"got {family}/{'/'.join(args)}")
     if args[0] != spec.name:
         raise ValueError(f"id names problem {args[0]!r}, predictor requested for {spec.name!r}")
+    if args[1].startswith("thesis"):        # imported thesis checkpoint, old architecture
+        from esbopfn.predictors.decpfn.legacy import load as load_legacy
+
+        return load_legacy("/".join((family, *args)), spec, **kw)
     return load("/".join((family, *args)), spec, **kw)
 
 

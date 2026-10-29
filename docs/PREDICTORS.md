@@ -3,8 +3,8 @@
 Every predictor maps a query trial (a controller observed for `t_obs` steps, `t_obs = 0` for an
 unrun controller) and a context of other trials to a distribution over its total cost `J_T`.
 This page covers the shared interface and the baselines (Segment-GP, Trajectory-TabPFN,
-Segment-TabPFN). The trained models (LC-PFN, DecPFN, XDecPFN, FT-PFN) are documented in their own
-sections.
+Segment-TabPFN). The trained models are documented in [TRAINING.md](TRAINING.md) (LC-PFN, DecPFN) and
+[CROSS_TRAJECTORY.md](CROSS_TRAJECTORY.md) (XDecPFN, FT-PFN).
 
 ## Interface (`esbopfn.predictors.base`)
 
@@ -107,7 +107,7 @@ A port of the GP used by the original MATLAB ESBO code, in PyTorch (float64, CPU
 
 Hyperparameters are clamped into their bounds after every step. The fit draws no random numbers.
 
-`cold_refit_growth` is a documented deviation (`docs/DEVIATIONS.md`, item 1). An `ExactGP` instance
+`cold_refit_growth` is a documented deviation (D2 in [DEVIATIONS.md](DEVIATIONS.md)). An `ExactGP` instance
 is one chain of fits. A fit is cold (fixed initialization, 100 steps) unless a previous fit exists
 and the training set has fewer than `(1 + cold_refit_growth)` times the rows of the last cold fit.
 Then it starts from the previous hyperparameters and runs 15 % of the steps. `0.0` (the default)

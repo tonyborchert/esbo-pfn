@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it and the thesis it accompanies."
+type: software
+title: "esbo-pfn: early stopping Bayesian optimization with prior-fitted networks for controller tuning"
+authors:
+  - family-names: Borchert
+    given-names: Tony
+    affiliation: RWTH Aachen University
+version: 0.1.0
+date-released: "2026-10-29"
+license: MIT
+keywords:
+  - Bayesian optimization
+  - early stopping
+  - prior-fitted networks
+  - controller tuning
+  - Furuta pendulum
+preferred-citation:
+  type: thesis
+  thesis-type: Bachelor thesis
+  title: "Prior Fitted Networks for Early Stopping Bayesian Optimization in Controller Tuning"
+  authors:
+    - family-names: Borchert
+      given-names: Tony
+  institution:
+    name: RWTH Aachen University
+  year: 2026
